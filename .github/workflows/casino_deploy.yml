@@ -34,7 +34,7 @@ jobs:
           git pull origin main --rebase --force
 
           echo "Building updated Docker image..."
-          docker build -t casino-bot:latest .
+          docker build -t casino-bot-image -f dockerfile .
 
           echo "Stopping and removing old container..."
           docker stop casino-bot || true
