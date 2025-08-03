@@ -2,7 +2,7 @@ import aiosqlite
 import time
 import asyncio
 
-DB_PATH = "./app/user_balance.db"
+DB_PATH = "./app/casino.db"
 
 # --- Database and user balance functions ---
 
