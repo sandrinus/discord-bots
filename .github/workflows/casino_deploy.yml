@@ -22,9 +22,11 @@ jobs:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
     - name: SSH into machine and deploy
+      env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          DISCORD_TOKEN: ${{ secrets.CASINO_TOKEN }}
       run: |
-        USER=${{ secrets.SSH_USER }}
-        HOST=${{ secrets.SSH_HOST }}
         ssh -o StrictHostKeyChecking=no $USER@$HOST << 'EOF'
 
           set -e
@@ -43,7 +45,12 @@ jobs:
           docker rm casino-bot || true
 
           echo "Starting new container..."
-          docker run -d --name casino-bot --restart unless-stopped -v /home/$USER/discord-bots/casino/casino.db:/app/casino.db -i casino-bot-image
+          docker run -d \
+          --name casino-bot \
+          --restart unless-stopped \
+          -v /home/$USER/discord-bots/casino/casino.db:/app/casino.db \
+          -e CASINO_TOKEN=${{ secrets.DISCORD_TOKEN }} \
+          -i casino-bot-image
 
           echo "✅ Bot deployed and running!"
         EOF

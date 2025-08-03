@@ -16,7 +16,6 @@ COPY main.py .
 COPY slots.py .
 COPY fundamentals.py .
 COPY blackjack.py .
-COPY casino.db .
 COPY wheel_of_fortune.py .
 
 CMD ["python", "main.py"]
