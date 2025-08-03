@@ -5,8 +5,7 @@ on:
     branches: ['*']
 
 permissions:
-  pull-requests: write
-  contents: read
+  contents: read  
 
 jobs:
   create-draft-pr:
@@ -21,13 +20,19 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gh
 
+      - name: Authenticate GitHub CLI using PAT
+        env:
+          GH_TOKEN: ${{ secrets.MY_PAT }}
+        run: |
+          echo "${GH_TOKEN}" | gh auth login --with-token
+
       - name: Create Draft Pull Request
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.MY_PAT }}
+          BRANCH_NAME: ${{ github.ref_name }}
         run: |
-          gh auth setup-git
           gh pr create --base main \
-                       --head ${{ github.ref_name }} \
-                       --title "Draft PR for ${{ github.ref_name }}" \
+                       --head "$BRANCH_NAME" \
+                       --title "Draft PR for $BRANCH_NAME" \
                        --body "Automatically created draft PR." \
                        --draft
