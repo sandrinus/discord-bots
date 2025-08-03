@@ -5,7 +5,7 @@ on:
     branches: ['*']
 
 permissions:
-  contents: read   # needed for checkout
+  contents: read
 
 jobs:
   create-draft-pr:
@@ -22,9 +22,10 @@ jobs:
 
       - name: Authenticate GitHub CLI using PAT
         env:
-          GH_TOKEN: ${{ secrets.MY_PAT }}
+          MY_PAT: ${{ secrets.MY_PAT }}
         run: |
-          gh auth login --with-token <<< "${GH_TOKEN}"
+          unset GH_TOKEN
+          echo "$MY_PAT" | gh auth login --with-token
 
       - name: Create Draft Pull Request
         env:
