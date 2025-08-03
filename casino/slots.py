@@ -113,8 +113,4 @@ def get_slot_view():
     To be called from main.py where balance/db functions are available.
     """
     view = SlotView()
-    # These should be assigned in main.py after importing slots
-    # For example:
-    # view.get_balance_func = main.get_balance
-    # view.update_balance_func = main.update_balance
     return view
