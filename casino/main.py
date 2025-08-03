@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import aiosqlite
 import time
+import os
 from datetime import datetime
 from fundamentals import *
 from slots import SlotView
@@ -151,4 +152,8 @@ async def casino(interaction: discord.Interaction):
         ephemeral=False
     )
 
-bot.run("MTM5NDQ1Njk1MzkyNDYxNjM2NA.GEZt41.ErXreQ2iBCrosVKWrp_pa3AniBFpVSlUHyDMWQ")
+token = os.getenv("CASINO_TOKEN")
+if not token:
+    raise RuntimeError("CASINO_TOKEN is not set in environment variables.")
+
+bot.run(token)
