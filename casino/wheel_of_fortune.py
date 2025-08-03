@@ -54,18 +54,19 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
 
     await interaction.edit_original_response(embed=embed_wheel(wheel_state), view=view)
 
-        winner = random.randint(10, 30)
-        final_index = (wheel_state + winner) % len(wheel_of_fortune)
+    winner = random.randint(10, 30)
+    final_index = (wheel_state + winner) % len(wheel_of_fortune)
 
-        for step in range(winner+1):
-            pos = (step + wheel_state) % len(wheel_of_fortune)
-            delay = 0.05 + ((step / winner)**3) * 1.1
-            await asyncio.sleep(delay)
-            try:
-                await interaction.edit_original_response(embed=embed_wheel(pos), view=view)
-            except discord.errors.NotFound:
-                return
-                
+    for step in range(winner+1):
+        pos = (step + wheel_state) % len(wheel_of_fortune)
+        delay = 0.05 + ((step / winner)**3) * 1.1
+        await asyncio.sleep(delay)
+        try:
+            await interaction.edit_original_response(embed=embed_wheel(pos), view=view)
+        except discord.errors.NotFound:
+            return
+
+    async with lock:     
         await update_wheel_state(uid, final_index)
         result = wheel_of_fortune[final_index]
 
@@ -100,9 +101,9 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
             outcome = "won" if result > 0 else "lost"
             msg_text = f"You {outcome} **{abs(result)}** coins!"
 
-        final_embed = embed_wheel(final_index)
-        final_embed.add_field(name="Result", value=msg_text, inline=False)
-        await interaction.edit_original_response(embed=final_embed, view=view)
+    final_embed = embed_wheel(final_index)
+    final_embed.add_field(name="Result", value=msg_text, inline=False)
+    await interaction.edit_original_response(embed=final_embed, view=view)
 
 
 class FortuneView(discord.ui.View):
