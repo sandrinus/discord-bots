@@ -31,8 +31,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.MY_PAT }}
           BRANCH_NAME: ${{ github.ref_name }}
+          REPO_NAME: ${{ github.repository }}
         run: |
-          gh pr create --base main \
+          gh pr create --repo "$REPO_NAME" \
+                       --base main \
                        --head "$BRANCH_NAME" \
                        --title "Draft PR for $BRANCH_NAME" \
                        --body "Automatically created draft PR." \
