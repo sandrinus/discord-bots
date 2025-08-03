@@ -109,6 +109,32 @@ class CasinoHomeView(discord.ui.View):
         await interaction.response.send_message(
             f"💰 Balance: {bal}\n🧮 Total Bet: {total}", ephemeral=True
         )
+    
+    @discord.ui.button(label="👑 Check Leaders", style=discord.ButtonStyle.primary, custom_id="top_5", row = 1)
+    async def leaders(self, interaction: discord.Interaction, button: discord.ui.Button):
+        async with aiosqlite.connect(DB_PATH) as db:
+            cur = await db.execute("SELECT username, balance FROM Users_Balance ORDER BY balance DESC LIMIT 5")
+            top_rows = await cur.fetchone()
+        
+        if not top_rows:
+            await interaction.response.send_message("No one gambled yet :(", ephemeral=True)
+            return
+
+        # Build leaderboard text
+        leaderboard = "\n".join(
+            [f"**#{i+1}** — {username}: 💰 {balance:,}" for i, (username, balance) in enumerate(top_rows)]
+        )
+
+        # Create the embed
+        embed = discord.Embed(
+            title="🏆 Top 5 Leaders",
+            description=leaderboard,
+            color=discord.Color.gold()
+        )
+        embed.set_footer(text="Updated in real-time")
+
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+            
 
 @bot.event
 async def on_ready():
