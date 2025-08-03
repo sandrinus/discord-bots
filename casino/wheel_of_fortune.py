@@ -71,17 +71,17 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
 
         if result == "x2":
             new_amount = bal * 2
-            await update_balance(uid, new_amount, 0)
-            msg_text = f"✨ You hit `x2`! Your bet is doubled! You win **{new_amount}** coins!"
+            await update_balance(uid, new_amount, bal)
+            msg_text = f"✨ You hit `x2`! Your balance is doubled! Now you have **{new_amount}** coins!"
         elif result == "/2":
             if bal % 2 != 0:
                 bal+=75
             new_amount = bal // 2
-            await update_balance(uid, new_amount, 0)
+            await update_balance(uid, new_amount, bal)
             msg_text = f"➗ You hit `/2`! You lose half your coins: **-{bal - new_amount}** coins."
         else:
             new_amount = bal + result
-            await update_balance(uid, new_amount, 0)
+            await update_balance(uid, new_amount, result)
             outcome = "won" if result > 0 else "lost"
             msg_text = f"You {outcome} **{abs(result)}** coins!"
 
