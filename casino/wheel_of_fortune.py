@@ -2,7 +2,11 @@ import discord
 import random
 import asyncio
 import aiosqlite
+<<<<<<< HEAD
 from fundamentals import get_balance, update_balance, get_user_lock, DB_PATH
+=======
+from fundamentals import get_balance, update_balance, get_user_lock, can_act, DB_PATH
+>>>>>>> 397f3a965a495eb1e8dd959340f7facb818e767a
 
 wheel_of_fortune = ["x2", 500, -1000, 350, "/2", -750, 1000, -250]
 
