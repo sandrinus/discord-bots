@@ -33,7 +33,7 @@ jobs:
           set -e
 
           echo "Navigating to bot directory..."
-          cd /home/$USER/discord-bots/casino
+          cd /home/$SSH_USER/discord-bots/casino
 
           echo "Pulling latest changes from main..."
           git pull origin main --rebase --force
@@ -49,7 +49,7 @@ jobs:
           docker run -d \
           --name casino-bot \
           --restart unless-stopped \
-          -v /home/$USER/discord-bots/casino/casino.db:/app/casino.db \
+          -v /home/$SSH_USER/discord-bots/casino/casino.db:/app/casino.db \
           -e CASINO_TOKEN=${{ secrets.DISCORD_TOKEN }} \
           -i casino-bot-image
 
