@@ -1,0 +1,26 @@
+name: Create Draft PR
+
+on:
+  push:
+    branches: ['*']
+
+jobs:
+  create-draft-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up GitHub CLI
+        uses: cli/cli-action@v2
+
+      - name: Create Draft Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create --base main \
+                       --head ${{ github.ref_name }} \
+                       --title "Draft PR for ${{ github.ref_name }}" \
+                       --body "Automatically created draft PR." \
+                       --draft
