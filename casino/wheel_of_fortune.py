@@ -47,25 +47,25 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
         bal, _ = await get_balance(uid, interaction.user.name)
         if bal < bet:
             await interaction.response.send_message(f"❌ Not enough coins! You need at least {bet}.", ephemeral=True)
+            await interaction.response.send_message(f"❌ Not enough coins! You need at least {bet}.", ephemeral=True)
             return
         
         wheel_state = await get_wheel_state(uid)
 
     await interaction.edit_original_response(embed=embed_wheel(wheel_state), view=view)
 
-    winner = random.randint(10, 30)
-    final_index = (wheel_state + winner) % len(wheel_of_fortune)
+        winner = random.randint(10, 30)
+        final_index = (wheel_state + winner) % len(wheel_of_fortune)
 
-    for step in range(winner+1):
-        pos = (step + wheel_state) % len(wheel_of_fortune)
-        delay = 0.05 + ((step / winner)**3) * 1.1
-        await asyncio.sleep(delay)
-        try:
-            await interaction.edit_original_response(embed=embed_wheel(pos), view=view)
-        except discord.errors.NotFound:
-            return
-
-    async with lock:     
+        for step in range(winner+1):
+            pos = (step + wheel_state) % len(wheel_of_fortune)
+            delay = 0.05 + ((step / winner)**3) * 1.1
+            await asyncio.sleep(delay)
+            try:
+                await interaction.edit_original_response(embed=embed_wheel(pos), view=view)
+            except discord.errors.NotFound:
+                return
+                
         await update_wheel_state(uid, final_index)
         result = wheel_of_fortune[final_index]
 
@@ -84,10 +84,25 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
             await update_balance(uid, new_amount, 0)
             outcome = "won" if result > 0 else "lost"
             msg_text = f"You {outcome} **{abs(result)}** coins!"
+        if result == "x2":
+            new_amount = bal * 2
+            await update_balance(uid, new_amount, 0)
+            msg_text = f"✨ You hit `x2`! Your bet is doubled! You win **{new_amount}** coins!"
+        elif result == "/2":
+            if bal % 2 != 0:
+                bal+=75
+            new_amount = bal // 2
+            await update_balance(uid, new_amount, 0)
+            msg_text = f"➗ You hit `/2`! You lose half your coins: **-{bal - new_amount}** coins."
+        else:
+            new_amount = bal + result
+            await update_balance(uid, new_amount, 0)
+            outcome = "won" if result > 0 else "lost"
+            msg_text = f"You {outcome} **{abs(result)}** coins!"
 
-    final_embed = embed_wheel(final_index)
-    final_embed.add_field(name="Result", value=msg_text, inline=False)
-    await interaction.edit_original_response(embed=final_embed, view=view)
+        final_embed = embed_wheel(final_index)
+        final_embed.add_field(name="Result", value=msg_text, inline=False)
+        await interaction.edit_original_response(embed=final_embed, view=view)
 
 
 class FortuneView(discord.ui.View):
