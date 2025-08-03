@@ -1,3 +1,4 @@
+# Creates PR on push to main
 name: Create Draft PR
 
 on:
