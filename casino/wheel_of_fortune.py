@@ -3,6 +3,7 @@ import random
 import asyncio
 import aiosqlite
 from fundamentals import get_balance, update_balance, get_user_lock, DB_PATH
+from fundamentals import get_balance, update_balance, get_user_lock, can_act, DB_PATH
 
 wheel_of_fortune = ["x2", 500, -1000, 350, "/2", -750, 1000, -250]
 
