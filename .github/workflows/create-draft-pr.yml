@@ -5,7 +5,7 @@ on:
     branches: ['*']
 
 permissions:
-  contents: read  
+  contents: read   # needed for checkout
 
 jobs:
   create-draft-pr:
@@ -24,7 +24,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.MY_PAT }}
         run: |
-          echo "${GH_TOKEN}" | gh auth login --with-token
+          gh auth login --with-token <<< "${GH_TOKEN}"
 
       - name: Create Draft Pull Request
         env:
