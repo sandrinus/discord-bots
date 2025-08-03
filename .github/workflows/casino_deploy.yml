@@ -28,7 +28,7 @@ jobs:
           set -e
 
           echo "Navigating to bot directory..."
-          cd /home/$USER/discord-bots
+          cd /home/$USER/discord-bots/casino
 
           echo "Pulling latest changes from main..."
           git pull origin main --rebase --force
