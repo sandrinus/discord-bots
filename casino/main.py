@@ -123,7 +123,7 @@ class CasinoHomeView(discord.ui.View):
             return
 
         leaderboard = "\n".join(
-            [f"**#{i+1}** — {username}: 💰 {balance:,}" for i, (username, balance) in enumerate(top_rows)]
+            [f"**#{i+1}** — {row['username']}: 💰 {int(row['balance']):,}" for i, row in enumerate(top_rows)]
         )
 
         # Create the embed
