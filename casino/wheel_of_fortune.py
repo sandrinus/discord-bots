@@ -84,10 +84,9 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
         outcome = "won" if result > 0 else "lost"
         msg_text = f"You {outcome} **{abs(result)}** coins!"
 
-        final_embed = embed_wheel(final_index)
-        final_embed.add_field(name="Result", value=msg_text, inline=False)
-
-        await interaction.edit_original_response(embed=final_embed, view=view)
+    final_embed = embed_wheel(final_index)
+    final_embed.add_field(name="Result", value=msg_text, inline=False)
+    await interaction.edit_original_response(embed=final_embed, view=view)
 
 
 class FortuneView(discord.ui.View):
