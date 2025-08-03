@@ -27,7 +27,7 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           DISCORD_TOKEN: ${{ secrets.CASINO_TOKEN }}
       run: |
-        ssh -o StrictHostKeyChecking=no $USER@$HOST << 'EOF'
+        ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << EOF
 
           set -e
 
