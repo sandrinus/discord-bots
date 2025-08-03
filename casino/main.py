@@ -141,6 +141,7 @@ class CasinoHomeView(discord.ui.View):
 async def on_ready():
     await init_db()  # DB setup on start
     await bot.tree.sync()  # Sync slash commands
+    bot.add_view(CasinoHomeView()) # Always register the persistent view class
     print(f"✅ {bot.user} is ready!")
 
 # Slash command to show the casino home screen message publicly
