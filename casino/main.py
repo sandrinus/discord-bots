@@ -135,7 +135,6 @@ class CasinoHomeView(discord.ui.View):
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
             
-
 @bot.event
 async def on_ready():
     await init_db()  # DB setup on start
