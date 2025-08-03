@@ -52,6 +52,6 @@ jobs:
           -v /home/$SSH_USER/discord-bots/casino/casino.db:/app/casino.db \
           -e CASINO_TOKEN=$DISCORD_TOKEN \
           -i casino-bot-image
-
+          
           echo "✅ Bot deployed and running!"
         EOF
