@@ -126,9 +126,10 @@ class BlackjackView(discord.ui.View):
 
             await interaction.response.defer()  # defer the initial response
 
+            player_total = hand_value(self.player_hand)
+
             while True:
                 dealer_total = hand_value(self.dealer_hand)
-                player_total = hand_value(self.player_hand)
 
                 # Delay to simulate dealer drawing slowly
                 await asyncio.sleep(0.5)
@@ -139,11 +140,10 @@ class BlackjackView(discord.ui.View):
                 # - If dealer has 17+ and is winning or drawing → stand.
                 if dealer_total < 17 or (dealer_total < player_total and dealer_total < 21):
                     self.dealer_hand.append(draw_card())
-                    await self.update_embed()
+                    await self.update_embed(reveal_dealer=True)
                 else:
                     break
 
-            player_total = hand_value(self.player_hand)
             dealer_total = hand_value(self.dealer_hand)
 
             if dealer_total > 21 or player_total > dealer_total:
