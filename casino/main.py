@@ -124,10 +124,10 @@ class CasinoHomeView(discord.ui.View):
             await interaction.response.send_message("No one gambled yet :(", ephemeral=True)
             return
         
-        leaderboard = [f"**#1 — {top_rows[0]['username']}** — {top_rows[0]['balance']}🤑"]
+        leaderboard = [f"**#1 {top_rows[0]['username']}** - {top_rows[0]['balance']}$"]
 
         # Add usernames only for ranks 2-5
-        leaderboard += [f"**#{i+2}** — {row['username']}" for i, row in enumerate(top_rows[1:5])]
+        leaderboard += [f"**#{i+2}** {row['username']}" for i, row in enumerate(top_rows[1:5])]
     
         leaderboard_text = "\n".join(leaderboard)
 
