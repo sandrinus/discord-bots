@@ -103,7 +103,7 @@ class BlackjackView(discord.ui.View):
         player_total = hand_value(self.player_hand)
 
         if player_total > 21:
-            await self.end_game(interaction, f"💥 Bust! You lose {self.bet}.", win=False)
+            await self.end_game(f"💥 Bust! You lose {self.bet}.", win=False)
             await interaction.response.defer()
         else:
             # Re-enable buttons after valid hit
@@ -147,14 +147,14 @@ class BlackjackView(discord.ui.View):
             dealer_total = hand_value(self.dealer_hand)
 
             if dealer_total > 21 or player_total > dealer_total:
-                await self.end_game(interaction, f"🎉 You win! +{self.bet}", win=True)
+                await self.end_game(f"🎉 You win! +{self.bet}", win=True)
             elif player_total == dealer_total:
                 await self.disable_all_items()
                 await update_balance(self.uid, self.balance, 0)  # Bet returned
                 await self.update_embed(footer="🤝 Draw. Bet returned.", color=discord.Color.gold(), reveal_dealer=True)
                 self.game_over = True
             else:
-                await self.end_game(interaction, f"💀 You lose {self.bet}.", win=False)
+                await self.end_game(f"💀 You lose {self.bet}.", win=False)
 
 async def start_blackjack(interaction: discord.Interaction, bet: int):
     uid = interaction.user.id
