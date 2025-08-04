@@ -111,21 +111,31 @@ class CasinoHomeView(discord.ui.View):
             f"💰 Balance: {bal}\n🧮 Total Bet: {total}", ephemeral=True
         )
     
-    @discord.ui.button(label="👑 Check Leaders", style=discord.ButtonStyle.primary, custom_id="top_5", row = 1)
+    @discord.ui.button(label="👑 Leaderboard", style=discord.ButtonStyle.primary, custom_id="top_5", row = 1)
     async def leaders(self, interaction: discord.Interaction, button: discord.ui.Button):
         async with aiosqlite.connect(DB_PATH) as db:
             db.row_factory = aiosqlite.Row
-            cur = await db.execute("SELECT username, balance FROM Users_Balance ORDER BY CAST(balance AS INTEGER) DESC LIMIT 5")
+            cur = await db.execute(
+                "SELECT user_id, username, balance FROM Users_Balance ORDER BY CAST(balance AS INTEGER) DESC"
+            )
             top_rows = await cur.fetchall()
 
         if not top_rows:
             await interaction.response.send_message("No one gambled yet :(", ephemeral=True)
             return
 
+        # Top 5 leaderboard formatting
         leaderboard = "\n".join(
-            [f"**#{i+1}** — {row['username']}" for i, row in enumerate(top_rows)]
-            # [f"**#{i+1}** — {row['username']}: 💰 {int(row['balance']):,}" for i, row in enumerate(top_rows)]
+            [f"**#{i+1}** — {row['username']}" for i, row in enumerate(top_rows[:5])]
         )
+
+        # Determine user rank
+        user_id = interaction.user.id
+        user_rank = None
+        for i, row in enumerate(top_rows):
+            if row["user_id"] == user_id:
+                user_rank = i + 1
+                break
 
         # Create the embed
         embed = discord.Embed(
@@ -133,7 +143,9 @@ class CasinoHomeView(discord.ui.View):
             description=leaderboard,
             color=discord.Color.gold()
         )
-        embed.set_footer(text="Updated in real-time")
+
+        if user_rank and user_rank > 5:
+            embed.set_footer(text=f"Your rank: #{user_rank}")
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
             
