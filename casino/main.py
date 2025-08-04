@@ -142,7 +142,7 @@ class CasinoHomeView(discord.ui.View):
         # Create the embed
         embed = discord.Embed(
             title="🏆 Top 5 Leaders",
-            description=leaderboard,
+            description=leaderboard_text,
             color=discord.Color.gold()
         )
 
