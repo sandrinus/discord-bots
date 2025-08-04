@@ -126,8 +126,10 @@ class CasinoHomeView(discord.ui.View):
         
         leaderboard = [f"**#1 — {top_rows[0]['username']}** — {top_rows[0]['balance']}🤑"]
 
-        # For ranks #2 to #5 show only usernames
-        leaderboard += "\n".join([f"**#{i+2}** — {row['username']}" for i, row in enumerate(top_rows[1:5])])
+        # Add usernames only for ranks 2-5
+        leaderboard.extend([f"**#{i+2}** — {row['username']}" for i, row in enumerate(top_rows[1:5])])
+    
+        leaderboard_text = "\n".join(leaderboard)
 
         # Determine user rank
         user_id = interaction.user.id
