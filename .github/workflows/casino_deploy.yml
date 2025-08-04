@@ -36,11 +36,12 @@ jobs:
           cd /home/$SSH_USER/discord-bots/casino
 
           echo "Pulling latest changes from main..."
-          git pull origin main --rebase --force
+          git fetch --all
+          git reset --hard origin/main
 
           echo "Building updated Docker image..."
           docker build -t casino-bot-image -f dockerfile .
-          docker image prune
+          docker image prune -f
 
           echo "Stopping and removing old container..."
           docker stop casino-bot || true
