@@ -62,7 +62,7 @@ async def update_balance(user_id: int, new_balance: int, bet_amount: int):
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute(
             "UPDATE Users_Balance SET balance = ?, total_bet = total_bet + ? WHERE user_id = ?",
-            (new_balance, bet_amount, user_id)
+            (new_balance, abs(bet_amount), user_id)
         )
         await db.commit()
 

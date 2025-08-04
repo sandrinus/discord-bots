@@ -45,7 +45,7 @@ class BlackjackView(discord.ui.View):
         if self.message:
             await self.message.edit(view=self)
 
-    async def update_embed(self, interaction, footer=None, color=discord.Color.blurple(), reveal_dealer=False):
+    async def update_embed(self, footer=None, color=discord.Color.blurple(), reveal_dealer=False):
         embed = discord.Embed(title="🃏 Blackjack", color=color)
         embed.add_field(name="Your Hand", value=f"{format_hand(self.player_hand)}\n({hand_value(self.player_hand)})", inline=False)
         embed.add_field(
@@ -59,7 +59,7 @@ class BlackjackView(discord.ui.View):
         # Instead of interaction.response.edit_message(), use the stored message's edit()
         await self.message.edit(embed=embed, view=self)
 
-    async def end_game(self, interaction, result_text, win=False):
+    async def end_game(self, result_text, win=False):
         self.game_over = True
         await self.disable_all_items()
 
@@ -94,6 +94,10 @@ class BlackjackView(discord.ui.View):
         if interaction.user.id != self.uid:
             await interaction.response.send_message("❌ Not your game!", ephemeral=True)
             return
+        
+        # Prevent spam clicks
+        button.disabled = True
+        await self.message.edit(view=self)
 
         self.player_hand.append(draw_card()) 
         player_total = hand_value(self.player_hand)
@@ -102,7 +106,10 @@ class BlackjackView(discord.ui.View):
             await self.end_game(interaction, f"💥 Bust! You lose {self.bet}.", win=False)
             await interaction.response.defer()
         else:
-            await self.update_embed(interaction)
+            # Re-enable buttons after valid hit
+            button.disabled = True
+            await self.message.edit(view=self)
+            await self.update_embed()
             await interaction.response.defer()
 
     @discord.ui.button(label="Stand", style=discord.ButtonStyle.primary)
@@ -119,11 +126,22 @@ class BlackjackView(discord.ui.View):
 
             await interaction.response.defer()  # defer the initial response
 
-            while hand_value(self.dealer_hand) < 17:
-                await asyncio.sleep(1)
-                self.dealer_hand.append(draw_card())
-                # now update embed via edit_original_message
-                await self.update_embed(interaction)
+            while True:
+                dealer_total = hand_value(self.dealer_hand)
+                player_total = hand_value(self.player_hand)
+
+                # Delay to simulate dealer drawing slowly
+                await asyncio.sleep(0.5)
+
+                # Dealer rules:
+                # - If dealer has less than 17 → must hit.
+                # - If dealer has 17+ but still losing → must hit.
+                # - If dealer has 17+ and is winning or drawing → stand.
+                if dealer_total < 17 or (dealer_total < player_total and dealer_total < 21):
+                    self.dealer_hand.append(draw_card())
+                    await self.update_embed()
+                else:
+                    break
 
             player_total = hand_value(self.player_hand)
             dealer_total = hand_value(self.dealer_hand)
@@ -133,7 +151,7 @@ class BlackjackView(discord.ui.View):
             elif player_total == dealer_total:
                 await self.disable_all_items()
                 await update_balance(self.uid, self.balance, 0)  # Bet returned
-                await self.update_embed(interaction, footer="🤝 Draw. Bet returned.", color=discord.Color.gold(), reveal_dealer=True)
+                await self.update_embed(footer="🤝 Draw. Bet returned.", color=discord.Color.gold(), reveal_dealer=True)
                 self.game_over = True
             else:
                 await self.end_game(interaction, f"💀 You lose {self.bet}.", win=False)
@@ -179,7 +197,7 @@ class BlackjackBetView(discord.ui.View):
     async def bet1000(self, interaction, button):
         await self.start_game(interaction, 1000)
 
-    @discord.ui.button(label="Check My Balance", style=discord.ButtonStyle.primary, custom_id="check_balance")
+    @discord.ui.button(label="Check My Balance", style=discord.ButtonStyle.primary, custom_id="check_balance", row=1)
     async def check(self, interaction, button):
         bal, total = await get_balance(interaction.user.id, interaction.user.name)
         await interaction.response.send_message(f"💰 Balance: {bal}\n🧮 Total Bet: {total}", ephemeral=True)
