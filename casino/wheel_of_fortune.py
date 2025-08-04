@@ -71,7 +71,7 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
 
         if result == "x2":
             new_amount = bal * 2
-            await update_balance(uid, new_amount,0)
+            await update_balance(uid, new_amount, 0)
             msg_text = f"✨ You hit `x2`! Your balance is doubled! Now you have **{new_amount}** coins!"
         elif result == "/2":
             if bal % 2 != 0:
