@@ -123,11 +123,11 @@ class CasinoHomeView(discord.ui.View):
         if not top_rows:
             await interaction.response.send_message("No one gambled yet :(", ephemeral=True)
             return
+        
+        leaderboard = [f"**#1 — {top_rows[0]['username']}** — {top_rows[0]['balance']}🤑"]
 
-        # Top 5 leaderboard formatting
-        leaderboard = "\n".join(
-            [f"**#{i+1}** — {row['username']}" for i, row in enumerate(top_rows[:5])]
-        )
+        # For ranks #2 to #5 show only usernames
+        leaderboard += "\n".join([f"**#{i+2}** — {row['username']}" for i, row in enumerate(top_rows[1:5])])
 
         # Determine user rank
         user_id = interaction.user.id

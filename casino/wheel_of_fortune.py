@@ -56,12 +56,12 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
 
     await interaction.edit_original_response(embed=embed_wheel(wheel_state), view=view)
 
-    winner = random.randint(10, 30)
+    winner = random.randint(2*len(wheel_of_fortune), 4*(wheel_of_fortune))
     final_index = (wheel_state + winner) % len(wheel_of_fortune)
 
     for step in range(winner+1):
         pos = (step + wheel_state) % len(wheel_of_fortune)
-        delay = 0.05 + ((step / winner)**3) * 1.1
+        delay = 0.05 + ((step / winner)**3) * 0.9
         await asyncio.sleep(delay)
         try:
             await interaction.edit_original_response(embed=embed_wheel(pos), view=view)
