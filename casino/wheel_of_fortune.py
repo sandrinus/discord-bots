@@ -46,7 +46,10 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
     async with lock:
         bal, _ = await get_balance(uid, interaction.user.name)
         if bal < bet:
-            await interaction.response.send_message(f"❌ Not enough coins! You need at least {bet}.", ephemeral=True)
+            if interaction.response.is_done():
+                await interaction.followup.send(f"❌ Not enough coins! You need at least {bet}.", ephemeral=True)
+            else:
+                await interaction.response.send_message(f"❌ Not enough coins! You need at least {bet}.", ephemeral=True)
             return
         
         wheel_state = await get_wheel_state(uid)
