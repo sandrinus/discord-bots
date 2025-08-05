@@ -56,8 +56,10 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
 
     await interaction.edit_original_response(embed=embed_wheel(wheel_state), view=view)
 
-    winner = random.randint(2*len(wheel_of_fortune), 5*len(wheel_of_fortune)-1)
-    final_index = winner % len(wheel_of_fortune)
+    full_rotations = random.randint(2, 5)
+    offset = random.randint(0, len(wheel_of_fortune) - 1)
+    winner = full_rotations * len(wheel_of_fortune) + offset
+    final_index = (wheel_state + winner) % len(wheel_of_fortune)
 
     for step in range(winner+1):
         pos = (step + wheel_state) % len(wheel_of_fortune)
