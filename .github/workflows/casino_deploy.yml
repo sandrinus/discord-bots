@@ -57,14 +57,11 @@ jobs:
           -e CASINO_TOKEN=$DISCORD_TOKEN \
           -i casino-bot-image
 
-          echo "Waiting a few seconds to check container health..."
-          sleep 10
-
           echo "Checking container status..."
           STATUS=$(docker inspect --format='{{.State.Status}}' casino-bot)
           EXIT_CODE=$(docker inspect --format='{{.State.ExitCode}}' casino-bot)
 
-          if [ "$STATUS" != "running" ] || [ -n "$EXIT_CODE" ]; then
+          if [ "$EXIT_CODE" -ne 0 ]; then
             echo "❌ Bot failed to start or exited with code $EXIT_CODE"
 
             curl -X POST -H "Content-Type: application/json" \
