@@ -97,29 +97,6 @@ class BlackjackView(discord.ui.View):
         # Just edit the existing ephemeral message
         await self.message.edit(embed=embed, view=self)
 
-    @discord.ui.button(label="Hit", style=discord.ButtonStyle.primary)
-    async def hit(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id != self.uid:
-            await interaction.response.send_message("❌ Not your game!", ephemeral=True)
-            return
-        
-        # Prevent spam clicks
-        button.disabled = True
-        await self.message.edit(view=self)
-
-        self.player_hand.append(draw_card()) 
-        player_total = hand_value(self.player_hand)
-
-        if player_total > 21:
-            await self.end_game(f"💥 Bust! You lose {self.bet}.", win=False)
-            await interaction.response.defer()
-        else:
-            # Re-enable buttons after valid hit
-            button.disabled = False
-            await self.message.edit(view=self)
-            await self.update_embed()
-            await interaction.response.defer()
-
     @discord.ui.button(label="Stand", style=discord.ButtonStyle.primary)
     async def stand(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.uid:
@@ -160,6 +137,29 @@ class BlackjackView(discord.ui.View):
                 self.game_over = True
             else:
                 await self.end_game(f"💀 You lose {self.bet}.", win=False)
+
+    @discord.ui.button(label="Hit", style=discord.ButtonStyle.primary)
+    async def hit(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.uid:
+            await interaction.response.send_message("❌ Not your game!", ephemeral=True)
+            return
+        
+        # Prevent spam clicks
+        button.disabled = True
+        await self.message.edit(view=self)
+
+        self.player_hand.append(draw_card()) 
+        player_total = hand_value(self.player_hand)
+
+        if player_total > 21:
+            await self.end_game(f"💥 Bust! You lose {self.bet}.", win=False)
+            await interaction.response.defer()
+        else:
+            # Re-enable buttons after valid hit
+            button.disabled = False
+            await self.message.edit(view=self)
+            await self.update_embed()
+            await interaction.response.defer()
 
 async def start_blackjack(interaction: discord.Interaction, bet: int):
     uid = interaction.user.id
