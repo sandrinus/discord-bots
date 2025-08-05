@@ -64,7 +64,7 @@ jobs:
           STATUS=$(docker inspect --format='{{.State.Status}}' casino-bot)
           EXIT_CODE=$(docker inspect --format='{{.State.ExitCode}}' casino-bot)
 
-          if [ "$STATUS" != "running" ] || [ "$EXIT_CODE" -ne 0 ]; then
+          if [ "$STATUS" != "running" ] || [ -n "$EXIT_CODE" ]; then
             echo "❌ Bot failed to start or exited with code $EXIT_CODE"
 
             curl -X POST -H "Content-Type: application/json" \
