@@ -65,7 +65,7 @@ class CasinoHomeView(discord.ui.View):
     async def goto_blackjack(self, interaction: discord.Interaction, button: discord.ui.Button):
         # Show Blackjack UI privately
         await interaction.response.send_message(
-            "🃏 **Blackjack Game**\nHit `Hit` to draw a card, `Stand` to hold your hand.\nTry to beat the dealer without going over 21!",
+            "🃏 **Blackjack Game**\nHit `Hit` to draw a card, `Stand` to hold your hand.\nTry to beat the dealer without going over 21!\n-# Score a perfect 21 and earn a sweet bonus!:)",
             view=BlackjackBetView(),
             ephemeral=True
         )
