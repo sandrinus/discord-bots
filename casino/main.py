@@ -151,13 +151,17 @@ class CasinoHomeView(discord.ui.View):
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-persistent_home_view = CasinoHomeView()
+persistent_home_view = None
 
 @bot.event
 async def on_ready():
+    global persistent_home_view
+    if persistent_home_view is None:  # Prevent re-creating on reconnects
+        persistent_home_view = CasinoHomeView()
+    bot.add_view(persistent_home_view)
+    
     await init_db()  # DB setup on start
     await bot.tree.sync()  # Sync slash commands
-    bot.add_view(persistent_home_view) # Always register the persistent view class
     print(f"✅ {bot.user} is ready!")
 
 # Slash command to show the casino home screen message publicly
