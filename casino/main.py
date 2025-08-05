@@ -150,12 +150,14 @@ class CasinoHomeView(discord.ui.View):
             embed.set_footer(text=f"Your rank: #{user_rank}")
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
-            
+
+persistent_home_view = CasinoHomeView()
+
 @bot.event
 async def on_ready():
     await init_db()  # DB setup on start
     await bot.tree.sync()  # Sync slash commands
-    bot.add_view(CasinoHomeView()) # Always register the persistent view class
+    bot.add_view(persistent_home_view) # Always register the persistent view class
     print(f"✅ {bot.user} is ready!")
 
 # Slash command to show the casino home screen message publicly
@@ -163,7 +165,7 @@ async def on_ready():
 async def casino(interaction: discord.Interaction):
     await interaction.response.send_message(
         embed=discord.Embed(title="🎮 Casino Home", description="Click buttons below to play!"),
-        view=CasinoHomeView(),
+        view=persistent_home_view,
         ephemeral=False
     )
 
