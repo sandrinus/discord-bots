@@ -64,12 +64,15 @@ class BlackjackView(discord.ui.View):
             if self.message:
                 await self.message.edit(embed=embed, view=self)
             
-    async def end_game(self, result_text, win=False):
+    async def end_game(self, result_text, win=False, bonus=False):
         self.game_over = True
         await self.disable_all_items()
 
         if win:
-            self.balance += self.bet
+            if bonus:
+                self.balance += self.bet * 5
+            else:
+                self.balance += self.bet
         else:
             self.balance -= self.bet
 
@@ -144,9 +147,12 @@ class BlackjackView(discord.ui.View):
                     break
     
             dealer_total = hand_value(self.dealer_hand)
-    
+            
             if dealer_total > 21 or player_total > dealer_total:
-                await self.end_game(f"🎉 You win! +{self.bet}", win=True)
+                if player_total == 21:
+                    await self.end_game(f"🎉 You win! +{self.bet * 5}", win=True, bonus=True)
+                else:
+                    await self.end_game(f"🎉 You win! +{self.bet}", win=True)
             elif player_total == dealer_total:
                 await self.disable_all_items()
                 await update_balance(self.uid, self.balance, 0)  # Bet returned
