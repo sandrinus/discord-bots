@@ -58,7 +58,7 @@ jobs:
           -i casino-bot-image
 
           echo "Waiting a few seconds to check container health..."
-          sleep 5
+          sleep 10
 
           echo "Checking container status..."
           STATUS=$(docker inspect --format='{{.State.Status}}' casino-bot)
