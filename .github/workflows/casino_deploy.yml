@@ -27,6 +27,8 @@ jobs:
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
           DISCORD_TOKEN: ${{ secrets.CASINO_TOKEN }}
+          DISCORD_WEBHOOK_ALERT: ${{ secrets.DISCORD_WEBHOOK_ALERT }}
+          MY_DISCORD_UID: ${{ secrets.MY_DISCORD_UID }}
       run: |
         ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << EOF
 
@@ -54,6 +56,22 @@ jobs:
           -v /home/$SSH_USER/discord-bots/casino/casino.db:/app/casino.db \
           -e CASINO_TOKEN=$DISCORD_TOKEN \
           -i casino-bot-image
+
+          echo "Waiting a few seconds to check container health..."
+          sleep 5
+
+          echo "Checking container status..."
+          STATUS=$(docker inspect --format='{{.State.Status}}' casino-bot)
+          EXIT_CODE=$(docker inspect --format='{{.State.ExitCode}}' casino-bot)
+
+          if [ "$STATUS" != "running" ] || [ "$EXIT_CODE" -ne 0 ]; then
+            echo "❌ Bot failed to start or exited with code $EXIT_CODE"
+
+            curl -X POST -H "Content-Type: application/json" \
+              -d "{\"content\": \"🚨 <@$MY_DISCORD_UID> **Casino Bot failed to start!**\"}" \
+              $DISCORD_WEBHOOK_ALERT
+            exit 1
+          fi
           
           echo "✅ Bot deployed and running!"
         EOF
