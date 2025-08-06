@@ -8,7 +8,7 @@ RUN pip install --no-cache-dir -r casino-requirements.txt
 
 COPY main.py .
 COPY slots.py .
-COPY fundamentals.py .
+COPY database.py .
 COPY blackjack.py .
 COPY wheel_of_fortune.py .
 
