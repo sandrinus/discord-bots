@@ -129,7 +129,6 @@ class BlackjackView(discord.ui.View):
                     await self.end_game(f"🎉 You win! +{self.bet}", win=True)
             elif player_total == dealer_total:
                 await self.disable_all_items()
-                await update_balance(self.uid, self.bet, 0)  # Bet returned
                 await self.update_embed(interaction=interaction, footer="🤝 Draw. Bet returned.", color=discord.Color.gold(), reveal_dealer=True)
                 self.game_over = True
             else:
