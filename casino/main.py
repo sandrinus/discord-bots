@@ -9,7 +9,7 @@ from blackjack import BlackjackBetView
 from wheel_of_fortune import FortuneView, embed_wheel, get_wheel_state
 
 intents = discord.Intents.default()
-bot = commands.Bot(command_prefix="!", intents=intents)
+bot = commands.Bot(command_prefix=None, intents=intents)
 
 # Update last daily claim timestamp
 async def update_last_daily_claim(user_id: int, current_time: int) -> bool:
@@ -164,7 +164,7 @@ async def on_ready():
     await init_db()  
 
     await bot.tree.sync()  # Sync slash commands
-    print(f"✅ {bot.user} is ready!")
+    print(f"✅ {bot.user} is ready!", flush=True)
 
 # Slash command to show the casino home screen message publicly
 @bot.tree.command(name="casino", description="Open the Casino home screen")
