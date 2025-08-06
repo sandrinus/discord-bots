@@ -1,16 +1,17 @@
-name: Auto-Deploy Discord Bot
+name: Quick Redeploy - Casino Bot Only
 
 on:
   push:
     branches:
       - main
     paths:
-      - 'casino/**'
+      - 'casino/*.py'
+      - 'casino/casino-requirements.txt'
   workflow_dispatch:
 
 jobs:
-  deploy:
-    name: Build & Run Docker on Remote Machine
+  redeploy-bot:
+    name: Rebuild & Restart Casino Bot Only
     runs-on: ubuntu-latest
 
     steps:
@@ -22,53 +23,44 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: SSH into machine and deploy
+    - name: SSH and Rebuild Casino Bot
       env:
-          SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          DISCORD_TOKEN: ${{ secrets.CASINO_TOKEN }}
-          DISCORD_WEBHOOK_ALERT: ${{ secrets.DISCORD_WEBHOOK_ALERT }}
-          MY_DISCORD_UID: ${{ secrets.MY_DISCORD_UID }}
+        SSH_USER: ${{ secrets.SSH_USER }}
+        SSH_HOST: ${{ secrets.SSH_HOST }}
+        CASINO_TOKEN: ${{ secrets.CASINO_TOKEN }}
+        POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+        POSTGRES_PASSWD: ${{ secrets.POSTGRES_PASSWD }}
+        DISCORD_WEBHOOK_ALERT: ${{ secrets.DISCORD_WEBHOOK_ALERT }}
+        MY_DISCORD_UID: ${{ secrets.MY_DISCORD_UID }}
       run: |
         ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << EOF
-
           set -e
 
-          echo "Navigating to bot directory..."
+          echo "Navigating to project directory..."
           cd /home/$SSH_USER/discord-bots/casino
 
-          echo "Pulling latest changes from main..."
+          echo "Fetching latest changes..."
           git fetch --all
           git reset --hard origin/main
 
-          echo "Building updated Docker image..."
-          docker build -t casino-bot-image -f dockerfile .
-          docker image prune -f
+          echo "Rebuilding and restarting only 'casino-bot' service..."
+          CASINO_TOKEN="$CASINO_TOKEN" \
+          POSTGRES_USER="$POSTGRES_USER" \
+          POSTGRES_PASSWD="$POSTGRES_PASSWD" \
+          docker compose -f casino/docker_conf/casino-postgres-docker-compose.yml \
+            --project-directory . \
+            up --build -d casino-bot
 
-          echo "Stopping and removing old container..."
-          docker stop casino-bot || true
-          docker rm casino-bot || true
+          echo "Checking bot status..."
+          EXIT_CODE=\$(docker inspect --format='{{.State.ExitCode}}' casino-bot)
 
-          echo "Starting new container..."
-          docker run -d \
-          --name casino-bot \
-          --restart unless-stopped \
-          -v /home/$SSH_USER/discord-bots/casino/casino.db:/app/casino.db \
-          -e CASINO_TOKEN=$DISCORD_TOKEN \
-          -i casino-bot-image
-
-          echo "Checking container status..."
-          STATUS=$(docker inspect --format='{{.State.Status}}' casino-bot)
-          EXIT_CODE=$(docker inspect --format='{{.State.ExitCode}}' casino-bot)
-
-          if [ "$EXIT_CODE" -ne 0 ]; then
-            echo "❌ Bot failed to start or exited with code $EXIT_CODE"
-
+          if [ "\$EXIT_CODE" -ne 0 ]; then
+            echo "❌ Casino bot failed with code \$EXIT_CODE"
             curl -X POST -H "Content-Type: application/json" \
-              -d "{\"content\": \"🚨 <@$MY_DISCORD_UID> **Casino Bot failed to start!**\"}" \
+              -d "{\"content\": \"🚨 <@$MY_DISCORD_UID> Casino Bot failed to restart!\"}" \
               $DISCORD_WEBHOOK_ALERT
             exit 1
           fi
-          
-          echo "✅ Bot deployed and running!"
+
+          echo "✅ Casino Bot successfully redeployed!"
         EOF
