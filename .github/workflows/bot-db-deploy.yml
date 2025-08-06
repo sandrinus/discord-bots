@@ -41,9 +41,7 @@ jobs:
           docker-compose -f docker_conf/casino-postgres-docker-compose.yml down || true
 
           echo "🚀 Building and starting full stack (bot + DB)..."
-          export CASINO_TOKEN=$CASINO_TOKEN \
-          export POSTGRES_USER=$POSTGRES_USER \
-          export POSTGRES_PASSWD=$POSTGRES_PASSWD \
+          CASINO_TOKEN="$CASINO_TOKEN" POSTGRES_USER="$POSTGRES_USER" POSTGRES_PASSWD="$POSTGRES_PASSWD" \
           docker-compose -f docker_conf/casino-postgres-docker-compose.yml \
             --project-directory . \
             up --build -d
