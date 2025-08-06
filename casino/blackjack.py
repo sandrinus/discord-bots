@@ -1,7 +1,7 @@
 import discord
 import random
 import asyncio
-from fundamentals import get_balance, update_balance, get_user_lock
+from database import get_balance, update_balance, get_user_lock
 
 CARD_VALUES = {
     "A": 11, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6,
@@ -27,11 +27,10 @@ def format_hand(hand, hide_second_card=False):
     return " | ".join(hand)
 
 class BlackjackView(discord.ui.View):
-    def __init__(self, uid, bet, balance):
+    def __init__(self, uid, bet):
         super().__init__(timeout=None)
         self.uid = uid
         self.bet = bet
-        self.balance = balance
 
         self.player_hand = [draw_card(), draw_card()]
         self.dealer_hand = [draw_card(), draw_card()]
@@ -70,13 +69,11 @@ class BlackjackView(discord.ui.View):
 
         if win:
             if bonus:
-                self.balance += self.bet * 5
+                await update_balance(self.uid, self.bet*5, self.bet)
             else:
-                self.balance += self.bet
+                await update_balance(self.uid, self.bet, self.bet)
         else:
-            self.balance -= self.bet
-
-        await update_balance(self.uid, self.balance, self.bet)
+            await update_balance(self.uid, -self.bet, self.bet)
 
         embed = discord.Embed(
             title="🃏 Blackjack",
@@ -132,7 +129,7 @@ class BlackjackView(discord.ui.View):
                     await self.end_game(f"🎉 You win! +{self.bet}", win=True)
             elif player_total == dealer_total:
                 await self.disable_all_items()
-                await update_balance(self.uid, self.balance, 0)  # Bet returned
+                await update_balance(self.uid, self.bet, 0)  # Bet returned
                 await self.update_embed(interaction=interaction, footer="🤝 Draw. Bet returned.", color=discord.Color.gold(), reveal_dealer=True)
                 self.game_over = True
             else:
@@ -168,8 +165,8 @@ async def start_blackjack(interaction: discord.Interaction, bet: int):
     if balance < bet:
         await interaction.response.send_message(f"❌ You need at least {bet} coins!", ephemeral=True)
         return
+    view = BlackjackView(uid, bet)
 
-    view = BlackjackView(uid, bet, balance)
     embed = discord.Embed(title="🃏 Blackjack", color=discord.Color.blurple())
     embed.add_field(name="Your Hand", value=f"{format_hand(view.player_hand)}\n({hand_value(view.player_hand)})", inline=False)
     embed.add_field(name="Dealer's Hand", value=f"{format_hand(view.dealer_hand, hide_second_card=True)}\n(?)", inline=False)

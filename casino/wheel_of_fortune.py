@@ -2,7 +2,7 @@ import discord
 import random
 import asyncio
 import aiosqlite
-from fundamentals import get_balance, update_balance, get_user_lock, DB_PATH
+from database import get_balance, update_balance, get_user_lock, pool
 
 wheel_of_fortune = ["x2", 500, -1000, 350, "/2", -750, 1000, -250]
 
@@ -28,16 +28,23 @@ def embed_wheel(i):
     embed = discord.Embed(title="Wheel of Fortune 🎯", description=f"```{desc}```", color=0xFFD700)
     return embed
 
-async def get_wheel_state(user_id: int):
-    async with aiosqlite.connect(DB_PATH) as db:
-        cur = await db.execute("SELECT wheel_state FROM Users_Balance WHERE user_id = ?", (user_id,))
-        row = await cur.fetchone()
-        return row[0] if row else 0  # default to 0 if missing
+def round_up_to_50(x: int) -> int:
+    return ((x + 49) // 50) * 50
+
+async def get_wheel_state(user_id: int) -> int:
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "SELECT wheel_state FROM user_accounts WHERE user_id = $1",
+            user_id
+        )
+        return row['wheel_state'] if row else 0  # default to 0 if missing
 
 async def update_wheel_state(user_id: int, state: int):
-    async with aiosqlite.connect(DB_PATH) as db:
-        await db.execute("UPDATE Users_Balance SET wheel_state = ? WHERE user_id = ?", (state, user_id))
-        await db.commit()
+    async with pool.acquire() as conn:
+        await conn.execute(
+            "UPDATE user_accounts SET wheel_state = $1 WHERE user_id = $2",
+            state, user_id
+        )
 
 async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None):
     uid = interaction.user.id
@@ -63,36 +70,42 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
 
     for step in range(winner+1):
         pos = (step + wheel_state) % len(wheel_of_fortune)
-        delay = 0.05 + ((step / winner)**3) * 1.1
+        delay = 0.05 + ((step / winner)**3) * 1.5
         await asyncio.sleep(delay)
         try:
             await interaction.edit_original_response(embed=embed_wheel(pos), view=view)
         except discord.errors.NotFound:
             return
 
-    async with lock:     
+    async with lock:
         await update_wheel_state(uid, final_index)
         result = wheel_of_fortune[final_index]
 
+        win_amount_delta = 0
+        bet_amount_delta = 0
+
         if result == "x2":
-            new_amount = bal * 2
-            await update_balance(uid, new_amount, 0)
-            msg_text = f"✨ You hit `x2`! Your balance is doubled! Now you have **{new_amount}** coins!"
+            # double balance means add current balance (win_amount_delta)
+            win_amount_delta = bal
+            msg_text = f"✨ You hit `x2`! Your balance is doubled! Now you have **{bal * 2}** coins!"
         elif result == "/2":
-            if bal % 2 != 0:
-                bal+=75
-            new_amount = bal // 2
-            await update_balance(uid, new_amount, bal)
-            msg_text = f"➗ You hit `/2`! You lose half your coins: **-{bal - new_amount}** coins."
+            # round up balance to nearest 50, lose half of that
+            def round_up_to_50(x):
+                return ((x + 49) // 50) * 50
+            rounded_bal = round_up_to_50(bal)
+            half = rounded_bal // 2
+            win_amount_delta = -half
+            msg_text = f"➗ You hit `/2`! You lose half your coins: **{half}**."
         else:
-            new_amount = bal + result
             if result > 0:
-                await update_balance(uid, new_amount, 0)
-                outcome = "won"
+                win_amount_delta = result
+                msg_text = f"You won **{result}** coins!"
             else:
-                await update_balance(uid, new_amount, result)
-                outcome = "lost"
-            msg_text = f"You {outcome} **{abs(result)}** coins!"
+                win_amount_delta = result
+                bet_amount_delta = result # negative amount increases total_bet by abs(value)
+                msg_text = f"You lost **{abs(result)}** coins!"
+
+        await update_balance(uid, win_amount_delta, bet_amount_delta)
 
     final_embed = embed_wheel(final_index)
     final_embed.add_field(name="Result", value=msg_text, inline=False)

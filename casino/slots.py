@@ -1,7 +1,7 @@
 import discord
 import random
 import asyncio
-from fundamentals import get_balance, update_balance, get_user_lock, can_act
+from database import get_balance, update_balance_atomic, can_act
 
 SLOT_SYMBOLS = (
     ["🍒"] * 10 + ["🍋"] * 7 + ["🍉"] * 5 +
@@ -13,59 +13,68 @@ SYMBOL_COEFFICIENTS = {
 }
 
 async def slot_machine_run(interaction, bet):
-    """
-    Run the slot machine spin:
-    - get_balance_func: async function(user_id) -> (balance, total_bet)
-    - update_balance_func: async function(user_id, new_balance, bet_amount)
-    """
     uid = interaction.user.id
-    lock = get_user_lock(uid)
-    async with lock:
-        bal, _ = await get_balance(uid, interaction.user.name)
-        if bet and bal < bet:
-            try:
-                await interaction.response.send_message(f"❌ Not enough coins! You have {bal}.", ephemeral=True)
-            except discord.errors.NotFound:
-                pass
-            return
-        
+
+    # No per-user lock here! Allow concurrent spins.
+
+    bal, _ = await get_balance(uid, interaction.user.name)
+    if bet and bal < bet:
         try:
-            await interaction.response.defer(ephemeral=True)
-        except (discord.errors.NotFound, discord.errors.InteractionResponded):
-            # Interaction already responded or expired, ignore and exit
-            return
-        reels = ["❓"] * 3
-        embed = discord.Embed(title="🎰 Rolling...", description=" | ".join(reels), color=discord.Color.gold())
-        msg = await interaction.followup.send(embed=embed, ephemeral=True)
+            await interaction.response.send_message(f"❌ Not enough coins! You have {bal}.", ephemeral=True)
+        except discord.errors.NotFound:
+            pass
+        return
 
-        for i in range(3):
-            await asyncio.sleep(random.uniform(0.4, 0.9))
-            reels[i] = random.choice(SLOT_SYMBOLS)
-            embed.description = " | ".join(reels)
-            await msg.edit(embed=embed)
+    try:
+        await interaction.response.defer(ephemeral=True)
+    except (discord.errors.NotFound, discord.errors.InteractionResponded):
+        return
 
-        await asyncio.sleep(0.3)
-        if reels[0] == reels[1] == reels[2]:
-            m = SYMBOL_COEFFICIENTS[reels[0]]
-            bonus = 1
-            if bet == 1000:
-                bonus = 4
-            elif bet == 500:
-                bonus = 2
-            elif bet == 100:
-                bonus = 1.5
-            win = int(bet * m * bonus)
-            newbal = bal - bet + win
-            await update_balance(uid, newbal, bet)
+    reels = ["❓"] * 3
+    embed = discord.Embed(title="🎰 Rolling...", description=" | ".join(reels), color=discord.Color.gold())
+    msg = await interaction.followup.send(embed=embed, ephemeral=True)
+
+    for i in range(3):
+        await asyncio.sleep(random.uniform(0.4, 0.9))
+        reels[i] = random.choice(SLOT_SYMBOLS)
+        embed.description = " | ".join(reels)
+        await msg.edit(embed=embed)
+
+    await asyncio.sleep(0.3)
+    if reels[0] == reels[1] == reels[2]:
+        m = SYMBOL_COEFFICIENTS[reels[0]]
+        bonus = 1
+        if bet == 1000:
+            bonus = 4
+        elif bet == 500:
+            bonus = 2
+        elif bet == 100:
+            bonus = 1.5
+        win = int(bet * m * bonus)
+        net_change = win - bet  # net gain
+
+    else:
+        win = 0
+        net_change = -bet  # net loss
+
+    # Atomically update balance, ensuring no overdraft
+    success = await update_balance_atomic(uid, net_change, bet)
+    if not success:
+        # The balance check above might be stale due to concurrent spins
+        embed.color = discord.Color.red()
+        embed.add_field(name="❌ Error", value="Balance changed during spin, insufficient funds.")
+    else:
+        if win > 0:
             embed.color = discord.Color.green()
             embed.add_field(name="🎉 Win", value=f"You won {win} coins!")
         else:
-            newbal = bal - bet
-            await update_balance(uid, newbal, bet)
             embed.color = discord.Color.red()
             embed.add_field(name="😢 Loss", value=f"You lost {bet} coins.")
-        embed.set_footer(text=f"Balance: {newbal}")
-        await msg.edit(embed=embed)
+
+    # Fetch updated balance to show in footer
+    bal, _ = await get_balance(uid, interaction.user.name)
+    embed.set_footer(text=f"Balance: {bal}")
+    await msg.edit(embed=embed)
 
 # SlotView UI class with buttons
 class SlotView(discord.ui.View):
@@ -73,7 +82,7 @@ class SlotView(discord.ui.View):
         super().__init__(timeout=None)
 
     async def common(self, interaction, bet):
-        if not can_act(interaction.user.id, 1.5):
+        if not can_act(interaction.user.id, 1):
             await interaction.response.send_message("⏱️ Cooldown: wait a few seconds before spinning again!", ephemeral=True)
             return
         

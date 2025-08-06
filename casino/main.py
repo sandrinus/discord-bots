@@ -1,10 +1,9 @@
 import discord
 from discord.ext import commands
-import aiosqlite
 import time
 import os
 from datetime import datetime
-from fundamentals import *
+from database import *
 from slots import SlotView
 from blackjack import BlackjackBetView
 from wheel_of_fortune import FortuneView, embed_wheel, get_wheel_state
@@ -16,34 +15,37 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 async def update_last_daily_claim(user_id: int, current_time: int) -> bool:
     today = datetime.fromtimestamp(current_time).date()
 
-    async with aiosqlite.connect(DB_PATH) as db:
-        # Ensure user exists
-        await db.execute(
-            "INSERT OR IGNORE INTO Users_Balance (user_id, balance, total_bet, last_daily_claim) VALUES (?, 30000, 0, 0)",
-            (user_id,)
+    async with pool.acquire() as conn:
+        # Insert user if not exists (Postgres syntax)
+        await conn.execute(
+            """
+            INSERT INTO user_accounts (user_id, balance, total_bet, last_daily_claim)
+            VALUES ($1, 30000, 0, 0)
+            ON CONFLICT (user_id) DO NOTHING
+            """,
+            user_id
         )
 
-        # Check last claim date
-        async with db.execute(
-            "SELECT last_daily_claim FROM Users_Balance WHERE user_id = ?",
-            (user_id,)
-        ) as cursor:
-            row = await cursor.fetchone()
+        # Fetch last_daily_claim timestamp
+        row = await conn.fetchrow(
+            "SELECT last_daily_claim FROM user_accounts WHERE user_id = $1",
+            user_id
+        )
 
         last_claim_date = None
-        if row and row[0] is not None:
-            last_claim_date = datetime.fromtimestamp(row[0]).date()
+        if row and row['last_daily_claim'] is not None:
+            last_claim_date = datetime.fromtimestamp(row['last_daily_claim']).date()
 
         if last_claim_date == today:
-            # Already claimed today, no update done
+            # Already claimed today
             return False
 
         # Update last_daily_claim to now
-        await db.execute(
-            "UPDATE Users_Balance SET last_daily_claim = ? WHERE user_id = ?",
-            (current_time, user_id)
+        await conn.execute(
+            "UPDATE user_accounts SET last_daily_claim = $1 WHERE user_id = $2",
+            current_time, user_id
         )
-        await db.commit()
+
         return True
 
 # --- UI Views and Bot Commands ---
@@ -97,8 +99,8 @@ class CasinoHomeView(discord.ui.View):
                 )
                 return
 
-            bal, _ = await get_balance(uid, interaction.user.name)
-            await update_balance(uid, bal + 3000, 0)
+            # Add 3000 coins to balance
+            await update_balance(uid, 3000, 0)
 
             await interaction.followup.send(
                 "✅ You claimed your daily reward of 3000 coins!", ephemeral=True
@@ -111,35 +113,29 @@ class CasinoHomeView(discord.ui.View):
             f"💰 Balance: {bal}\n🧮 Total Bet: {total}", ephemeral=True
         )
     
-    @discord.ui.button(label="👑 Leaderboard", style=discord.ButtonStyle.primary, custom_id="top_5", row = 1)
+    @discord.ui.button(label="👑 Leaderboard", style=discord.ButtonStyle.primary, custom_id="top_5", row=1)
     async def leaders(self, interaction: discord.Interaction, button: discord.ui.Button):
-        async with aiosqlite.connect(DB_PATH) as db:
-            db.row_factory = aiosqlite.Row
-            cur = await db.execute(
-                "SELECT user_id, username, balance FROM Users_Balance ORDER BY CAST(balance AS INTEGER) DESC"
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(
+                "SELECT user_id, username, balance FROM user_accounts ORDER BY balance DESC"
             )
-            top_rows = await cur.fetchall()
 
-        if not top_rows:
+        if not rows:
             await interaction.response.send_message("No one gambled yet :(", ephemeral=True)
             return
-        
-        leaderboard = [f"**#1 {top_rows[0]['username']}** - {top_rows[0]['balance']}$"]
 
-        # Add usernames only for ranks 2-5
-        leaderboard += [f"**#{i+2}** {row['username']}" for i, row in enumerate(top_rows[1:5])]
-    
+        leaderboard = [f"**#1 {rows[0]['username']}** - {rows[0]['balance']}$"]
+        leaderboard += [f"**#{i+2}** {row['username']}" for i, row in enumerate(rows[1:5])]
+
         leaderboard_text = "\n".join(leaderboard)
 
-        # Determine user rank
         user_id = interaction.user.id
         user_rank = None
-        for i, row in enumerate(top_rows):
+        for i, row in enumerate(rows):
             if row["user_id"] == user_id:
                 user_rank = i + 1
                 break
 
-        # Create the embed
         embed = discord.Embed(
             title="🏆 Top 5 Leaders",
             description=leaderboard_text,
@@ -156,11 +152,17 @@ persistent_home_view = None
 @bot.event
 async def on_ready():
     global persistent_home_view
+
+    # Initialize the asyncpg connection pool once
+    await init_pool()
+
     if persistent_home_view is None:  # Prevent re-creating on reconnects
         persistent_home_view = CasinoHomeView()
     bot.add_view(persistent_home_view)
     
-    await init_db()  # DB setup on start
+    # Initialize the database schema after pool is ready
+    await init_db()  
+
     await bot.tree.sync()  # Sync slash commands
     print(f"✅ {bot.user} is ready!")
 
