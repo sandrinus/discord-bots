@@ -1,8 +1,8 @@
 services:
   casino-bot:
     build:
-      context: ./docker_conf
-      dockerfile: casino-dockerfile
+      context: .
+      dockerfile: docker_conf/casino-dockerfile
     container_name: casino-bot
     restart: unless-stopped
     environment:
