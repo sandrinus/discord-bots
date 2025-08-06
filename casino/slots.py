@@ -64,7 +64,7 @@ async def slot_machine_run(interaction, bet):
         embed.color = discord.Color.red()
         embed.add_field(name="❌ Error", value="Balance changed during spin, insufficient funds.")
     else:
-        if win > 0:
+        if win >= 0:
             embed.color = discord.Color.green()
             embed.add_field(name="🎉 Win", value=f"You won {win} coins!")
         else:
