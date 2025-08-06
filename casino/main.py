@@ -3,7 +3,7 @@ from discord.ext import commands
 import time
 import os
 from datetime import datetime
-from database import pool, init_pool, init_db, get_balance, update_balance, get_user_lock
+from database import init_pool, init_db, get_balance, update_balance, get_user_lock, pool
 from slots import SlotView
 from blackjack import BlackjackBetView
 from wheel_of_fortune import FortuneView, embed_wheel, get_wheel_state
