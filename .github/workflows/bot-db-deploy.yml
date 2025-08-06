@@ -41,11 +41,9 @@ jobs:
           docker-compose -f docker_conf/casino-postgres-docker-compose.yml down || true
 
           echo "📄 Writing .env file for Docker Compose..."
-          cat <<EOT > .env
-            CASINO_TOKEN=${CASINO_TOKEN}
-            POSTGRES_USER=${POSTGRES_USER}
-            POSTGRES_PASSWD=${POSTGRES_PASSWD}
-          EOT
+          echo "CASINO_TOKEN=${{ env.CASINO_TOKEN }}" > .env
+          echo "POSTGRES_USER=${{ env.POSTGRES_USER }}" >> .env
+          echo "POSTGRES_PASSWD=${{ env.POSTGRES_PASSWD }}" >> .env
 
           echo "🚀 Building and starting full stack (bot + DB)..."
           docker-compose -f docker_conf/casino-postgres-docker-compose.yml \
