@@ -41,7 +41,8 @@ async def slot_machine_run(interaction, bet):
         await msg.edit(embed=embed)
 
     await asyncio.sleep(0.3)
-    if reels[0] == reels[1] == reels[2]:
+    result = (reels[0] == reels[1] == reels[2])
+    if result:
         m = SYMBOL_COEFFICIENTS[reels[0]]
         bonus = 1
         if bet == 1000:
@@ -64,7 +65,7 @@ async def slot_machine_run(interaction, bet):
         embed.color = discord.Color.red()
         embed.add_field(name="❌ Error", value="Balance changed during spin, insufficient funds.")
     else:
-        if win >= 0:
+        if win > 0 or (result and win==bet==0):
             embed.color = discord.Color.green()
             embed.add_field(name="🎉 Win", value=f"You won {win} coins!")
         else:
