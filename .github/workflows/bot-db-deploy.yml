@@ -54,6 +54,7 @@ jobs:
 
           echo "🩺 Checking bot status..."
           EXIT_CODE=$(docker inspect --format='{{.State.ExitCode}}' casino-bot)
+          sleep 3
 
           if [ "$EXIT_CODE" -ne 0 ]; then
             echo "❌ Casino Bot failed with code \$EXIT_CODE"
