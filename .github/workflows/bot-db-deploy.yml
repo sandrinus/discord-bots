@@ -44,7 +44,7 @@ jobs:
           CASINO_TOKEN="$CASINO_TOKEN" \
           POSTGRES_USER="$POSTGRES_USER" \
           POSTGRES_PASSWD="$POSTGRES_PASSWD" \
-          docker-compose -f casino/docker_conf/casino-postgres-docker-compose.yml \
+          docker-compose -f docker_conf/casino-postgres-docker-compose.yml \
             --project-directory . \
             up --build -d
 
