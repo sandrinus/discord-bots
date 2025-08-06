@@ -27,7 +27,7 @@ jobs:
         DISCORD_WEBHOOK_ALERT: ${{ secrets.DISCORD_WEBHOOK_ALERT }}
         MY_DISCORD_UID: ${{ secrets.MY_DISCORD_UID }}
       run: |
-        ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << "EOF"
+        ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << EOF
           set -e
 
           echo "📁 Navigating to bot directory..."
