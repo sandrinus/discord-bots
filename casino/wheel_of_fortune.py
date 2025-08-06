@@ -1,7 +1,7 @@
 import discord
 import random
 import asyncio
-from database import get_balance, update_balance, get_user_lock, pool
+from database import get_pool, get_balance, update_balance, get_user_lock
 
 wheel_of_fortune = ["x2", 500, -1000, 350, "/2", -750, 1000, -250]
 
@@ -31,7 +31,7 @@ def round_up_to_50(x: int) -> int:
     return ((x + 49) // 50) * 50
 
 async def get_wheel_state(user_id: int) -> int:
-    async with pool.acquire() as conn:
+    async with get_pool().acquire() as conn:
         row = await conn.fetchrow(
             "SELECT wheel_state FROM user_accounts WHERE user_id = $1",
             user_id
@@ -39,7 +39,7 @@ async def get_wheel_state(user_id: int) -> int:
         return row['wheel_state'] if row else 0  # default to 0 if missing
 
 async def update_wheel_state(user_id: int, state: int):
-    async with pool.acquire() as conn:
+    async with get_pool().acquire() as conn:
         await conn.execute(
             "UPDATE user_accounts SET wheel_state = $1 WHERE user_id = $2",
             state, user_id
