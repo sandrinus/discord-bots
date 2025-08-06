@@ -8,9 +8,9 @@ services:
     container_name: casino-bot
     restart: unless-stopped
     environment:
-      - CASINO_TOKEN: ${CASINO_TOKEN}
-      - POSTGRES_USER: ${POSTGRES_USER}
-      - POSTGRES_PASSWD: ${POSTGRES_PASSWD}
+      CASINO_TOKEN: ${CASINO_TOKEN}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWD: ${POSTGRES_PASSWD}
     networks:
       - casino-db-net
 
