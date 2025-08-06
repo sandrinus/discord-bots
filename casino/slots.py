@@ -82,7 +82,7 @@ class SlotView(discord.ui.View):
         super().__init__(timeout=None)
 
     async def common(self, interaction, bet):
-        if not can_act(interaction.user.id, 1):
+        if not can_act(interaction.user.id, 0.5):
             await interaction.response.send_message("⏱️ Cooldown: wait a few seconds before spinning again!", ephemeral=True)
             return
         
