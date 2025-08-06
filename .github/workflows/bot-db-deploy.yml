@@ -1,0 +1,63 @@
+name: Full Deploy - Casino Bot & PostgreSQL
+
+on:
+  workflow_dispatch:
+
+jobs:
+  full-deploy:
+    name: Deploy Casino Bot & PostgreSQL
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Start SSH Agent & Add Key
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: SSH and Deploy Full Stack
+      env:
+        SSH_USER: ${{ secrets.SSH_USER }}
+        SSH_HOST: ${{ secrets.SSH_HOST }}
+        CASINO_TOKEN: ${{ secrets.CASINO_TOKEN }}
+        POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+        POSTGRES_PASSWD: ${{ secrets.POSTGRES_PASSWD }}
+        DISCORD_WEBHOOK_ALERT: ${{ secrets.DISCORD_WEBHOOK_ALERT }}
+        MY_DISCORD_UID: ${{ secrets.MY_DISCORD_UID }}
+      run: |
+        ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << 'EOF'
+          set -e
+
+          echo "📁 Navigating to bot directory..."
+          cd /home/$SSH_USER/discord-bots/casino
+
+          echo "📥 Pulling latest changes from main..."
+          git fetch --all
+          git reset --hard origin/main
+
+          echo "🧼 Stopping and removing current containers..."
+          docker compose -f casino/docker_conf/casino-postgres-docker-compose.yml down
+
+          echo "🚀 Building and starting full stack (bot + DB)..."
+          CASINO_TOKEN="$CASINO_TOKEN" \
+          POSTGRES_USER="$POSTGRES_USER" \
+          POSTGRES_PASSWD="$POSTGRES_PASSWD" \
+          docker compose -f casino/docker_conf/casino-postgres-docker-compose.yml \
+            --project-directory . \
+            up --build -d
+
+          echo "🩺 Checking bot status..."
+          EXIT_CODE=\$(docker inspect --format='{{.State.ExitCode}}' casino-bot)
+
+          if [ "\$EXIT_CODE" -ne 0 ]; then
+            echo "❌ Casino Bot failed with code \$EXIT_CODE"
+            curl -X POST -H "Content-Type: application/json" \
+              -d "{\"content\": \"🚨 <@$MY_DISCORD_UID> Casino Bot failed to start after full deploy!\"}" \
+              $DISCORD_WEBHOOK_ALERT
+            exit 1
+          fi
+
+          echo "✅ Casino Bot and PostgreSQL successfully deployed!"
+        EOF
