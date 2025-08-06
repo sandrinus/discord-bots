@@ -6,10 +6,10 @@ COPY casino-requirements.txt .
 
 RUN pip install --no-cache-dir -r casino-requirements.txt
 
-COPY main.py ../casino/
-COPY slots.py ../casino/
-COPY fundamentals.py ../casino/
-COPY blackjack.py ../casino/
-COPY wheel_of_fortune.py ../casino/
+COPY main.py .
+COPY slots.py .
+COPY fundamentals.py .
+COPY blackjack.py .
+COPY wheel_of_fortune.py .
 
 CMD ["python", "main.py"]
