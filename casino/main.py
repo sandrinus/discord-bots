@@ -12,7 +12,7 @@ intents = discord.Intents.default()
 bot = commands.Bot(command_prefix=None, intents=intents)
 
 # Update last daily claim timestamp
-async def update_last_daily_claim(user_id: int, username: str = '', current_time: int) -> bool:
+async def update_last_daily_claim(user_id: int, username: str, current_time: int) -> bool:
     today = datetime.fromtimestamp(current_time).date()
 
     async with get_pool().acquire() as conn:
