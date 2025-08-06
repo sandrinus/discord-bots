@@ -1,7 +1,6 @@
 import discord
 import random
 import asyncio
-import aiosqlite
 from database import get_balance, update_balance, get_user_lock, pool
 
 wheel_of_fortune = ["x2", 500, -1000, 350, "/2", -750, 1000, -250]
