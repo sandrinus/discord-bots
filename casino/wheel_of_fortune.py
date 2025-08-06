@@ -90,8 +90,6 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
             msg_text = f"✨ You hit `x2`! Your balance is doubled! Now you have **{bal * 2}** coins!"
         elif result == "/2":
             # round up balance to nearest 50, lose half of that
-            def round_up_to_50(x):
-                return ((x + 49) // 50) * 50
             rounded_bal = round_up_to_50(bal)
             half = rounded_bal // 2
             win_amount_delta = -half
