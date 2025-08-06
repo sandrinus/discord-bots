@@ -43,6 +43,10 @@ jobs:
           git fetch --all
           git reset --hard origin/main
 
+          echo "🧼 Stopping and removing current containers..."
+          docker-compose -f docker_conf/casino-postgres-docker-compose.yml down || true
+          docker image prune -f
+
           echo "📄 Writing .env file for Docker Compose..."
           echo "CASINO_TOKEN=${{ env.CASINO_TOKEN }}" > .env
           echo "POSTGRES_USER=${{ env.POSTGRES_USER }}" >> .env
