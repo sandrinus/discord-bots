@@ -106,7 +106,7 @@ class CasinoHomeView(discord.ui.View):
                 "✅ You claimed your daily reward of 3000 coins!", ephemeral=True
             )
 
-    @discord.ui.button(label="💰 Check Balance", style=discord.ButtonStyle.primary, custom_id="check_balance", row = 1)
+    @discord.ui.button(label="💰 Check Balance", style=discord.ButtonStyle.primary, custom_id="check_balance_main", row = 1)
     async def check_balance(self, interaction: discord.Interaction, button: discord.ui.Button):
         bal, total = await get_balance(interaction.user.id, interaction.user.name)
         await interaction.response.send_message(
