@@ -27,7 +27,7 @@ jobs:
         DISCORD_WEBHOOK_ALERT: ${{ secrets.DISCORD_WEBHOOK_ALERT }}
         MY_DISCORD_UID: ${{ secrets.MY_DISCORD_UID }}
       run: |
-        ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << EOF
+        ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << "EOF"
           set -e
 
           echo "📁 Navigating to bot directory..."
@@ -41,9 +41,9 @@ jobs:
           docker-compose -f docker_conf/casino-postgres-docker-compose.yml down || true
 
           echo "🚀 Building and starting full stack (bot + DB)..."
-          CASINO_TOKEN="$CASINO_TOKEN" \
-          POSTGRES_USER="$POSTGRES_USER" \
-          POSTGRES_PASSWD="$POSTGRES_PASSWD" \
+          export CASINO_TOKEN="$CASINO_TOKEN" \
+          export POSTGRES_USER="$POSTGRES_USER" \
+          export POSTGRES_PASSWD="$POSTGRES_PASSWD" \
           docker-compose -f docker_conf/casino-postgres-docker-compose.yml \
             --project-directory . \
             up --build -d
