@@ -3,7 +3,7 @@ from discord.ext import commands
 import time
 import os
 from datetime import datetime
-from database import init_pool, init_db, get_balance, update_balance, get_user_lock, pool
+from database import init_pool, get_pool, init_db, get_balance, update_balance, get_user_lock
 from slots import SlotView
 from blackjack import BlackjackBetView
 from wheel_of_fortune import FortuneView, embed_wheel, get_wheel_state
@@ -15,7 +15,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 async def update_last_daily_claim(user_id: int, current_time: int) -> bool:
     today = datetime.fromtimestamp(current_time).date()
 
-    async with pool.acquire() as conn:
+    async with get_pool().acquire() as conn:
         # Insert user if not exists (Postgres syntax)
         await conn.execute(
             """
@@ -115,7 +115,7 @@ class CasinoHomeView(discord.ui.View):
     
     @discord.ui.button(label="👑 Leaderboard", style=discord.ButtonStyle.primary, custom_id="top_5", row=1)
     async def leaders(self, interaction: discord.Interaction, button: discord.ui.Button):
-        async with pool.acquire() as conn:
+        async with get_pool().acquire() as conn:
             rows = await conn.fetch(
                 "SELECT user_id, username, balance FROM user_accounts ORDER BY balance DESC"
             )
