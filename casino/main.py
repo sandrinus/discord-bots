@@ -12,18 +12,18 @@ intents = discord.Intents.default()
 bot = commands.Bot(command_prefix=None, intents=intents)
 
 # Update last daily claim timestamp
-async def update_last_daily_claim(user_id: int, current_time: int) -> bool:
+async def update_last_daily_claim(user_id: int, username: str = '', current_time: int) -> bool:
     today = datetime.fromtimestamp(current_time).date()
 
     async with get_pool().acquire() as conn:
         # Insert user if not exists (Postgres syntax)
         await conn.execute(
             """
-            INSERT INTO user_accounts (user_id, balance, total_bet, last_daily_claim)
-            VALUES ($1, 30000, 0, 0)
+            INSERT INTO user_accounts (user_id, username, balance, total_bet, last_daily_claim)
+            VALUES ($1, $2, 30000, 0, 0)
             ON CONFLICT (user_id) DO NOTHING
             """,
-            user_id
+            user_id, username
         )
 
         # Fetch last_daily_claim timestamp
@@ -91,7 +91,7 @@ class CasinoHomeView(discord.ui.View):
 
         async with lock:
             now = int(time.time())
-            success = await update_last_daily_claim(uid, now)
+            success = await update_last_daily_claim(uid, interaction.user.name, now)
 
             if not success:
                 await interaction.followup.send(
