@@ -1,9 +1,7 @@
-version: '3.8'
-
 services:
   casino-bot:
     build:
-      context: .
+      context: ./docker_conf
       dockerfile: casino-dockerfile
     container_name: casino-bot
     restart: unless-stopped
