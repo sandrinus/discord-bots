@@ -40,13 +40,18 @@ jobs:
           echo "🧼 Stopping and removing current containers..."
           docker-compose -f docker_conf/casino-postgres-docker-compose.yml down || true
 
+          echo "📄 Writing .env file for Docker Compose..."
+          cat <<EOT > .env
+            CASINO_TOKEN=${CASINO_TOKEN}
+            POSTGRES_USER=${POSTGRES_USER}
+            POSTGRES_PASSWD=${POSTGRES_PASSWD}
+          EOT
+
           echo "🚀 Building and starting full stack (bot + DB)..."
-          export CASINO_TOKEN=$CASINO_TOKEN
-          export POSTGRES_USER=$POSTGRES_USER
-          export POSTGRES_PASSWD=$POSTGRES_PASSWD
           docker-compose -f docker_conf/casino-postgres-docker-compose.yml \
             --project-directory . \
             up --build -d
+
 
           echo "🩺 Checking bot status..."
           EXIT_CODE=\$(docker inspect --format='{{.State.ExitCode}}' casino-bot)
