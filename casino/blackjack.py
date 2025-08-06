@@ -1,6 +1,5 @@
 import discord
 import random
-import asyncio
 from database import get_balance, update_balance, get_user_lock
 
 CARD_VALUES = {
