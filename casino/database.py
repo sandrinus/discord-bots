@@ -16,6 +16,11 @@ async def init_pool():
     if pool is None:
         pool = await asyncpg.create_pool(dsn=DB_DSN)
 
+def get_pool():
+    if pool is None:
+        raise RuntimeError("Database pool not initialized yet!")
+    return pool
+
 # --- Database and user balance functions ---
 
 async def init_db():
