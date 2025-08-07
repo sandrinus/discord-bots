@@ -33,7 +33,7 @@ jobs:
         DISCORD_WEBHOOK_ALERT: ${{ secrets.DISCORD_WEBHOOK_ALERT }}
         MY_DISCORD_UID: ${{ secrets.MY_DISCORD_UID }}
       run: |
-        ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << 'EOF'
+        ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << EOF
           set -e
 
           echo "Navigating to project directory..."
@@ -60,7 +60,7 @@ jobs:
           echo "Checking bot status..."
           sleep 10
           
-          if ! test $(docker inspect --format='{{.State.Status}}' casino-bot) = "running"; then
+          if ! test "\$(docker inspect --format='{{.State.Status}}' casino-bot)"  = "running"; then
             echo "❌ Casino bot failed!"
             curl -X POST -H "Content-Type: application/json" \
               -d "{\"content\": \"🚨 <@$MY_DISCORD_UID> Casino Bot failed to restart!\"}" \
