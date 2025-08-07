@@ -1,4 +1,4 @@
-import discord
+import discor
 from discord.ext import commands
 import time
 import os
