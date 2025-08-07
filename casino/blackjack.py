@@ -28,7 +28,7 @@ def format_hand(hand, hide_second_card=False):
 
 class BlackjackView(discord.ui.View):
     def __init__(self, uid, bet):
-        super().__init__(timeout=None)
+        super().__init__(timeout=180)
         self.uid = uid
         self.bet = bet
 
