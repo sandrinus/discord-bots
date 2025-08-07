@@ -58,7 +58,7 @@ jobs:
             up --build -d casino-bot
 
           echo "Checking bot status..."
-          docker inspect --format='{{.State.Status}}' casino-bot 2>/dev/null | read STATUS
+          STATUS=$(docker inspect --format='{{.State.Status}}' casino-bot 2>/dev/null)
           
           if [ "$STATUS" != "running" ]; then
             echo "❌ Casino bot failed with code $STATUS"
