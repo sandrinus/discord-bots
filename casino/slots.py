@@ -116,11 +116,3 @@ class SlotView(discord.ui.View):
                         value="• 50 - x1\n• 100 - x1.5\n• 500 - x2\n• 1000 - x4",
                         inline=False)
         await interaction.response.send_message(embed=embed, ephemeral=True)
-
-def get_slot_view():
-    """
-    Factory to create a SlotView with attached balance functions.
-    To be called from main.py where balance/db functions are available.
-    """
-    view = SlotView()
-    return view
