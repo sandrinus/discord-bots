@@ -58,8 +58,9 @@ jobs:
             up --build -d casino-bot
 
           echo "Checking bot status..."
+          sleep 10
           
-          if [[ $(docker inspect --format='{{.State.Status}}' casino-bot) != "running" ]]; then
+          if ! test $(docker inspect --format='{{.State.Status}}' casino-bot) = "running"; then
             echo "❌ Casino bot failed!"
             curl -X POST -H "Content-Type: application/json" \
               -d "{\"content\": \"🚨 <@$MY_DISCORD_UID> Casino Bot failed to restart!\"}" \
