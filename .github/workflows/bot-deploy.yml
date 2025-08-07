@@ -58,7 +58,7 @@ jobs:
             up --build -d casino-bot
 
           echo "Checking bot status..."
-          sleep 3
+          sleep 15
           EXIT_CODE=$(docker inspect --format='{{.State.ExitCode}}' casino-bot )
           echo "Casino bot $EXIT_CODE"
           
