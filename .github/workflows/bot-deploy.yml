@@ -52,15 +52,15 @@ jobs:
           echo "POSTGRES_USER=${{ env.POSTGRES_USER }}" >> .env
           echo "POSTGRES_PASSWD=${{ env.POSTGRES_PASSWD }}" >> .env
 
-          echo "🚀 Building and starting full stack (bot + DB)..."
+          echo "🚀 Building and starting casino bot..."
           docker-compose -f docker_conf/casino-postgres-docker-compose.yml \
             --project-directory . \
             up --build -d casino-bot
 
           echo "Checking bot status..."
           
-          if [[ $(docker inspect --format='{{.State.Status})' casino-bot) != " running"]]; then
-            echo "❌ Casino bot failed with code $EXIT_CODE"
+          if [[ $(docker inspect --format='{{.State.Status}}' casino-bot) != "running" ]]; then
+            echo "❌ Casino bot failed!"
             curl -X POST -H "Content-Type: application/json" \
               -d "{\"content\": \"🚨 <@$MY_DISCORD_UID> Casino Bot failed to restart!\"}" \
               $DISCORD_WEBHOOK_ALERT
