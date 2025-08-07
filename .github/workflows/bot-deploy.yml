@@ -58,12 +58,10 @@ jobs:
             up --build -d casino-bot
 
           echo "Checking bot status..."
-          sleep 15
-          EXIT_CODE=$(docker inspect --format='{{.State.ExitCode}}' casino-bot )
-          echo "Casino bot $EXIT_CODE"
+          STATUS=$(docker inspect --format='{{.State.Status}}' casino-bot)
           
-          if [ "$EXIT_CODE" -ne 0 ]; then
-            echo "❌ Casino bot failed with code $EXIT_CODE"
+          if [ "$STATUS" -ne "running" ]; then
+            echo "❌ Casino bot failed with code $STATUS"
             curl -X POST -H "Content-Type: application/json" \
               -d "{\"content\": \"🚨 <@$MY_DISCORD_UID> Casino Bot failed to restart!\"}" \
               $DISCORD_WEBHOOK_ALERT
