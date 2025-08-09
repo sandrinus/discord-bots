@@ -94,8 +94,7 @@ class BlackjackView(discord.ui.View):
 
         # Just edit the existing ephemeral message
         await self.message.edit(embed=embed, view=self)
-        async with active_blackjack_tables_lock:
-            active_blackjack_tables.discard(self.uid)
+        active_blackjack_tables.discard(self.uid)
 
     @discord.ui.button(label="Stand", style=discord.ButtonStyle.primary)
     async def stand(self, interaction: discord.Interaction, button: discord.ui.Button):
