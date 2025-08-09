@@ -23,50 +23,70 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: SSH and Rebuild Casino Bot
+    - name: Setup SSH multiplexing
+      run: |
+        mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
+        echo "Host ${{ secrets.SSH_HOST }}
+          ControlMaster auto
+          ControlPath ~/.ssh/cm-%r@%h:%p
+          ControlPersist 600" >> ~/.ssh/config
+
+    - name: Navigate to project & fetch latest changes
+      env:
+        SSH_USER: ${{ secrets.SSH_USER }}
+        SSH_HOST: ${{ secrets.SSH_HOST }}
+      run: |
+        ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST \
+          "cd /home/$SSH_USER/discord-bots/casino && \
+           git fetch --all && \
+           git reset --hard origin/main"
+
+    - name: Stop old containers & clean up images
+      env:
+        SSH_USER: ${{ secrets.SSH_USER }}
+        SSH_HOST: ${{ secrets.SSH_HOST }}
+      run: |
+        ssh $SSH_USER@$SSH_HOST \
+          "cd /home/$SSH_USER/discord-bots/casino && \
+           docker-compose -f docker_conf/casino-postgres-docker-compose.yml rm -sf casino-bot || true && \
+           docker image prune -f"
+
+    - name: Write .env file for Docker
       env:
         SSH_USER: ${{ secrets.SSH_USER }}
         SSH_HOST: ${{ secrets.SSH_HOST }}
         CASINO_TOKEN: ${{ secrets.CASINO_TOKEN }}
         POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
         POSTGRES_PASSWD: ${{ secrets.POSTGRES_PASSWD }}
+      run: |
+        ssh $SSH_USER@$SSH_HOST \
+          "cd /home/$SSH_USER/discord-bots/casino && \
+           echo 'CASINO_TOKEN=${CASINO_TOKEN}' > .env && \
+           echo 'POSTGRES_USER=${POSTGRES_USER}' >> .env && \
+           echo 'POSTGRES_PASSWD=${POSTGRES_PASSWD}' >> .env"
+
+    - name: Build & start casino bot
+      env:
+        SSH_USER: ${{ secrets.SSH_USER }}
+        SSH_HOST: ${{ secrets.SSH_HOST }}
+      run: |
+        ssh $SSH_USER@$SSH_HOST \
+          "cd /home/$SSH_USER/discord-bots/casino && \
+           docker-compose -f docker_conf/casino-postgres-docker-compose.yml \
+           --project-directory . up --build -d casino-bot"
+
+    - name: Verify bot status & send alert if failed
+      env:
+        SSH_USER: ${{ secrets.SSH_USER }}
+        SSH_HOST: ${{ secrets.SSH_HOST }}
         DISCORD_WEBHOOK_ALERT: ${{ secrets.DISCORD_WEBHOOK_ALERT }}
         MY_DISCORD_UID: ${{ secrets.MY_DISCORD_UID }}
       run: |
-        ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << EOF
-          set -e
-
-          echo "Navigating to project directory..."
-          cd /home/$SSH_USER/discord-bots/casino
-
-          echo "Fetching latest changes..."
-          git fetch --all
-          git reset --hard origin/main
-
-          echo "🧼 Stopping and removing current containers..."
-          docker-compose -f docker_conf/casino-postgres-docker-compose.yml down || true
-          docker image prune -f
-
-          echo "📄 Writing .env file for Docker Compose..."
-          echo "CASINO_TOKEN=${{ env.CASINO_TOKEN }}" > .env
-          echo "POSTGRES_USER=${{ env.POSTGRES_USER }}" >> .env
-          echo "POSTGRES_PASSWD=${{ env.POSTGRES_PASSWD }}" >> .env
-
-          echo "🚀 Building and starting casino bot..."
-          docker-compose -f docker_conf/casino-postgres-docker-compose.yml \
-            --project-directory . \
-            up --build -d casino-bot
-
-          echo "Checking bot status..."
-          sleep 10
-          
-          if ! test "\$(docker inspect --format='{{.State.Status}}' casino-bot)"  = "running"; then
-            echo "❌ Casino bot failed!"
-            curl -X POST -H "Content-Type: application/json" \
-              -d "{\"content\": \"🚨 <@$MY_DISCORD_UID> Casino Bot failed to restart!\"}" \
-              $DISCORD_WEBHOOK_ALERT
-            exit 1
-          fi
-
-          echo "✅ Casino Bot successfully redeployed!"
-        EOF
+        ssh $SSH_USER@$SSH_HOST \
+          "if ! test \"\$(docker inspect --format='{{.State.Status}}' casino-bot)\" = \"running\"; then
+             curl -X POST -H 'Content-Type: application/json' \
+               -d '{\"content\": \"🚨 <@${MY_DISCORD_UID}> Casino Bot failed to restart!\"}' \
+               ${DISCORD_WEBHOOK_ALERT}
+             exit 1
+           fi"
