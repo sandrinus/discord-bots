@@ -4,6 +4,7 @@ import asyncio
 from database import get_pool, get_balance, update_balance, get_user_lock
 
 wheel_of_fortune = ["x2", 500, -1000, 350, "/2", -750, 1000, -250]
+active_wheel_spins = set() # set to control active spins so user cannot spam
 
 def embed_wheel(i):
     def fmt(val):
@@ -47,6 +48,14 @@ async def update_wheel_state(user_id: int, state: int):
 
 async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None):
     uid = interaction.user.id
+
+    if uid in active_wheel_spins:
+        await interaction.response.send_message(
+            "⚠️ You are already spinning the wheel!", ephemeral=True
+        )
+        return
+    active_wheel_spins.add(uid)
+
     lock = get_user_lock(uid)
 
     async with lock:
@@ -107,6 +116,7 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
     final_embed = embed_wheel(final_index)
     final_embed.add_field(name="Result", value=msg_text, inline=False)
     await interaction.edit_original_response(embed=final_embed, view=view)
+    active_wheel_spins.discard(uid)
 
 
 class FortuneView(discord.ui.View):
