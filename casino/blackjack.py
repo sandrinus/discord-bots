@@ -187,7 +187,7 @@ async def start_blackjack(interaction: discord.Interaction, bet: int):
 
 class BlackjackBetView(discord.ui.View):
     def __init__(self):
-        super().__init__(timeout=None)
+        super().__init__(timeout=60)
 
     async def start_game(self, interaction, bet):
         await start_blackjack(interaction, bet)

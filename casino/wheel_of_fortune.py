@@ -121,7 +121,7 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
 
 class FortuneView(discord.ui.View):
     def __init__(self):
-        super().__init__(timeout=180)
+        super().__init__(timeout=30)
 
     @discord.ui.button(label="Spin Wheel 🎯", style=discord.ButtonStyle.success, custom_id="wheel_spin")
     async def spin(self, interaction: discord.Interaction, button: discord.ui.Button):
