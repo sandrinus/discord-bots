@@ -165,7 +165,7 @@ async def start_blackjack(interaction: discord.Interaction, bet: int):
 
     if uid in active_blackjack_tables:
         await interaction.response.send_message(
-            "⚠️ You need to finish previous game", ephemeral=True
+            "⚠️ You need to finish the previous game", ephemeral=True
         )
         return
     active_blackjack_tables.add(uid)
