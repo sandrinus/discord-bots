@@ -37,7 +37,10 @@ async def init_db():
             )
         """)
 
-         # Ensure CHECK constraint exists even for older tables
+        # Make sure balance isn't already negative from old data
+        await conn.execute("UPDATE user_accounts SET balance = 0 WHERE balance < 0;")
+        
+        # Now ensure CHECK constraint exists
         await conn.execute("""
             DO $$
             BEGIN
@@ -51,10 +54,6 @@ async def init_db():
             END
             $$;
         """)
-
-        # Make sure balance isn't already negative from old data
-        await conn.execute("UPDATE user_accounts SET balance = 0 WHERE balance < 0;")
-
         # Define new columns to add if missing, with their SQL definitions
         new_columns = {
             "wheel_state": "SMALLINT DEFAULT 0",
