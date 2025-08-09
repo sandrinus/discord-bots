@@ -4,7 +4,7 @@ import asyncio
 from database import get_pool, get_balance, update_balance, get_user_lock
 
 wheel_of_fortune = ["x2", 500, -1000, 350, "/2", -750, 1000, -250]
-active_wheel_spins = set() # set to control active spins so user cannot spam
+active_wheel_spins = set() # set to control active spins so users cannot spam
 
 def embed_wheel(i):
     def fmt(val):
