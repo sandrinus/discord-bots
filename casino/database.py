@@ -30,12 +30,30 @@ async def init_db():
             CREATE TABLE IF NOT EXISTS user_accounts (
                 user_id BIGINT PRIMARY KEY,
                 username TEXT DEFAULT '',
-                balance INTEGER DEFAULT 30000,
+                balance INTEGER DEFAULT 30000 CHECK (balance >= 0),
                 total_bet INTEGER DEFAULT 0,
                 last_daily_claim BIGINT DEFAULT 0,
                 wheel_state SMALLINT DEFAULT 0
             )
         """)
+
+         # Ensure CHECK constraint exists even for older tables
+        await conn.execute("""
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_constraint
+                    WHERE conname = 'balance_non_negative'
+                ) THEN
+                    ALTER TABLE user_accounts
+                    ADD CONSTRAINT balance_non_negative CHECK (balance >= 0);
+                END IF;
+            END
+            $$;
+        """)
+
+        # Make sure balance isn't already negative from old data
+        await conn.execute("UPDATE user_accounts SET balance = 0 WHERE balance < 0;")
 
         # Define new columns to add if missing, with their SQL definitions
         new_columns = {
@@ -80,9 +98,11 @@ async def update_balance(user_id: int, win_amount: int, bet_amount: int):
     async with pool.acquire() as conn:
         await conn.execute(
             """
-            UPDATE user_accounts 
-            SET balance = balance + $1, total_bet = total_bet + $2 
+            UPDATE user_accounts
+            SET balance = GREATEST(balance + $1, 0),
+                total_bet = total_bet + $2
             WHERE user_id = $3
+            RETURNING balance
             """,
             win_amount, abs(bet_amount), user_id
         )

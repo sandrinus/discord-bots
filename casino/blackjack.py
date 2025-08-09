@@ -9,6 +9,7 @@ CARD_VALUES = {
 }
 SUITS = ["♠", "♥", "♦", "♣"]
 CARDS = [f"{rank}{suit}" for rank in CARD_VALUES for suit in SUITS]
+active_blackjack_tables = set()
 
 def draw_card():
     return random.choice(CARDS)
@@ -93,6 +94,8 @@ class BlackjackView(discord.ui.View):
 
         # Just edit the existing ephemeral message
         await self.message.edit(embed=embed, view=self)
+        async with active_blackjack_tables_lock:
+            active_blackjack_tables.discard(self.uid)
 
     @discord.ui.button(label="Stand", style=discord.ButtonStyle.primary)
     async def stand(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -159,6 +162,14 @@ class BlackjackView(discord.ui.View):
 
 async def start_blackjack(interaction: discord.Interaction, bet: int):
     uid = interaction.user.id
+
+    if uid in active_blackjack_tables:
+        await interaction.response.send_message(
+            "⚠️ You need to finish the previous game", ephemeral=True
+        )
+        return
+    active_blackjack_tables.add(uid)
+
     username = interaction.user.name
     balance, _ = await get_balance(uid, username)
     if balance < bet:
@@ -177,7 +188,7 @@ async def start_blackjack(interaction: discord.Interaction, bet: int):
 
 class BlackjackBetView(discord.ui.View):
     def __init__(self):
-        super().__init__(timeout=None)
+        super().__init__(timeout=60)
 
     async def start_game(self, interaction, bet):
         await start_blackjack(interaction, bet)
