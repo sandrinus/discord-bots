@@ -49,7 +49,8 @@ jobs:
       run: |
         ssh $SSH_USER@$SSH_HOST \
           "cd /home/$SSH_USER/discord-bots/casino && \
-           docker-compose -f docker_conf/casino-postgres-docker-compose.yml rm -sf casino-bot || true && \
+           docker stop casino-bot || true && \
+           docker rm casino-bot || true && \
            docker image prune -f"
 
     - name: Write .env file for Docker
