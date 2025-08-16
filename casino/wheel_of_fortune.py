@@ -49,13 +49,6 @@ async def update_wheel_state(user_id: int, state: int):
 async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None):
     uid = interaction.user.id
 
-    if uid in active_wheel_spins:
-        await interaction.response.send_message(
-            "⚠️ You are already spinning the wheel!", ephemeral=True
-        )
-        return
-    active_wheel_spins.add(uid)
-
     lock = get_user_lock(uid)
 
     async with lock:
