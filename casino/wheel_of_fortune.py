@@ -8,11 +8,11 @@ active_wheel_spins = set() # set to control active spins so users cannot spam
 
 def embed_wheel(i):
     def fmt(val):
-        return str(val).center(5) 
+        return str(val).center(4) 
     desc = f"""
-            🔻
-            🔻
-            🔻
+            {fmt('🔻')}
+            {fmt('🔻')}
+            {fmt('🔻')}
            {fmt(wheel_of_fortune[i%len(wheel_of_fortune)])}
              |
  {fmt(wheel_of_fortune[(i+1)%len(wheel_of_fortune)])}   \\   |   /   {fmt(wheel_of_fortune[(i+7)%len(wheel_of_fortune)])}
@@ -71,14 +71,14 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
 
     await interaction.edit_original_response(embed=embed_wheel(wheel_state), view=view)
 
-    full_rotations = random.randint(2, 5)
+    full_rotations = random.randint(2, 4)
     offset = random.randint(0, len(wheel_of_fortune) - 1)
     winner = full_rotations * len(wheel_of_fortune) + offset
     final_index = (wheel_state + winner) % len(wheel_of_fortune)
 
     for step in range(winner+1):
         pos = (step + wheel_state) % len(wheel_of_fortune)
-        delay = 0.05 + ((step / winner)**3) * 1.5
+        delay = 0.05 + ((step / winner)**3) * 2
         await asyncio.sleep(delay)
         try:
             await interaction.edit_original_response(embed=embed_wheel(pos), view=view)
@@ -137,7 +137,7 @@ class FortuneView(discord.ui.View):
         await interaction.edit_original_response(view=self)
 
     @discord.ui.button(label="Check Balance", style=discord.ButtonStyle.primary, custom_id="wheel_check")
-    async def check(self, interaction, button):
+    async def check(self, interaction):
         bal, total = await get_balance(interaction.user.id, interaction.user.name)
         await interaction.response.send_message(f"💰 Balance: {bal}\n🧮 Total Bet: {total}", ephemeral=True)
 
