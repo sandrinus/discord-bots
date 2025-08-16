@@ -137,7 +137,7 @@ class FortuneView(discord.ui.View):
         await interaction.edit_original_response(view=self)
 
     @discord.ui.button(label="Check Balance", style=discord.ButtonStyle.primary, custom_id="wheel_check")
-    async def check(self, interaction):
+    async def check(self, interaction, button: discord.ui.Button):
         bal, total = await get_balance(interaction.user.id, interaction.user.name)
         await interaction.response.send_message(f"💰 Balance: {bal}\n🧮 Total Bet: {total}", ephemeral=True)
 
