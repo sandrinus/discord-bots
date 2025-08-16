@@ -86,28 +86,34 @@ class SlotView(discord.ui.View):
         if not can_act(interaction.user.id, 0.5):
             await interaction.response.send_message("⏱️ Cooldown: wait a few seconds before spinning again!", ephemeral=True)
             return
-        
-        # Use bot's balance functions via attributes or injected later
+
+        # Delete the clicked message immediately to avoid clutter
+        await interaction.message.delete()
+
+        # Immediately send a brand-new slot machine with fresh buttons
+        await interaction.followup.send("🎰 Ready for another spin?", view=SlotView(), ephemeral=True)
+
+        # Run this spin animation in background
         await slot_machine_run(interaction, bet)
 
     @discord.ui.button(label="Spin (Free)", style=discord.ButtonStyle.secondary, custom_id="slot_spin")
-    async def spin(self, interaction, button): await self.common(interaction, 0)
+    async def spin(self, interaction): await self.common(interaction, 0)
     @discord.ui.button(label="Bet 50", style=discord.ButtonStyle.success, custom_id="bet_50")
-    async def bet50(self, interaction, button): await self.common(interaction, 50)
+    async def bet50(self, interaction): await self.common(interaction, 50)
     @discord.ui.button(label="Bet 100", style=discord.ButtonStyle.success, custom_id="bet_100")
-    async def bet100(self, interaction, button): await self.common(interaction, 100)
+    async def bet100(self, interaction): await self.common(interaction, 100)
     @discord.ui.button(label="Bet 500", style=discord.ButtonStyle.success, custom_id="bet_500")
-    async def bet500(self, interaction, button): await self.common(interaction, 500)
+    async def bet500(self, interaction): await self.common(interaction, 500)
     @discord.ui.button(label="Bet 1000", style=discord.ButtonStyle.danger, custom_id="bet_1000")
-    async def bet1000(self, interaction, button): await self.common(interaction, 1000)
+    async def bet1000(self, interaction): await self.common(interaction, 1000)
 
     @discord.ui.button(label="Check My Balance", style=discord.ButtonStyle.primary, custom_id="check_balance")
-    async def check(self, interaction, button):
+    async def check(self, interaction):
         bal, total = await get_balance(interaction.user.id, interaction.user.name)
         await interaction.response.send_message(f"💰 Balance: {bal}\n🧮 Total Bet: {total}", ephemeral=True)
 
     @discord.ui.button(label="Show Coefficients", style=discord.ButtonStyle.secondary, custom_id="show_coeffs")
-    async def coeffs(self, interaction, button):
+    async def coeffs(self, interaction):
         embed = discord.Embed(title="🎰 Coefficients", color=discord.Color.purple())
         for e, c in SYMBOL_COEFFICIENTS.items():
             chance = SLOT_SYMBOLS.count(e) / len(SLOT_SYMBOLS)
