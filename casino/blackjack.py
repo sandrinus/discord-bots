@@ -189,26 +189,23 @@ class BlackjackBetView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=60)
 
-    async def start_game(self, interaction, bet):
-        await start_blackjack(interaction, bet)
-
     @discord.ui.button(label="Bet 50", style=discord.ButtonStyle.success, custom_id="blackjack_bet_50")
-    async def bet50(self, interaction):
-        await self.start_game(interaction, 50)
+    async def bet50(self, interaction, button: discord.ui.Button):
+        await start_blackjack(interaction, 50)
 
     @discord.ui.button(label="Bet 100", style=discord.ButtonStyle.success, custom_id="blackjack_bet_100")
-    async def bet100(self, interaction):
-        await self.start_game(interaction, 100)
+    async def bet100(self, interaction, button: discord.ui.Button):
+        await start_blackjack(interaction, 100)
 
     @discord.ui.button(label="Bet 500", style=discord.ButtonStyle.success, custom_id="blackjack_bet_500")
-    async def bet500(self, interaction):
-        await self.start_game(interaction, 500)
+    async def bet500(self, interaction, button: discord.ui.Button):
+        await start_blackjack(interaction, 500)
 
     @discord.ui.button(label="Bet 1000", style=discord.ButtonStyle.danger, custom_id="blackjack_bet_1000")
-    async def bet1000(self, interaction):
-        await self.start_game(interaction, 1000)
+    async def bet1000(self, interaction, button: discord.ui.Button):
+        await start_blackjack(interaction, 1000)
 
     @discord.ui.button(label="Check My Balance", style=discord.ButtonStyle.primary, custom_id="check_balance", row=1)
-    async def check(self, interaction):
+    async def check(self, interaction, button: discord.ui.Button):
         bal, total = await get_balance(interaction.user.id, interaction.user.name)
         await interaction.response.send_message(f"💰 Balance: {bal}\n🧮 Total Bet: {total}", ephemeral=True)
