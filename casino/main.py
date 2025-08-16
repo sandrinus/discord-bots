@@ -6,7 +6,7 @@ from datetime import datetime
 from database import init_pool, get_pool, init_db, get_balance, update_balance, get_user_lock
 from slots import SlotView
 from blackjack import BlackjackBetView
-from wheel_of_fortune import FortuneView, embed_wheel, get_wheel_state
+from wheel_of_fortune import FortuneView, embed_wheel, get_wheel_state, active_wheel_spins
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix=None, intents=intents)
@@ -74,6 +74,13 @@ class CasinoHomeView(discord.ui.View):
 
     @discord.ui.button(label="🍀 Spin Fortune Wheel", style=discord.ButtonStyle.success, custom_id="goto_fortune")
     async def goto_fortune(self, interaction: discord.Interaction, button: discord.ui.Button):
+        uid = interaction.user.id
+        if uid in active_wheel_spins:
+            await interaction.response.send_message(
+                "⚠️ You are already spinning the wheel!", ephemeral=True
+            )
+            return
+        active_wheel_spins.add(uid)
         await interaction.response.send_message(
             "🍀 **Fortune Wheel**\nPress to spin and test your luck!",
             embed=embed_wheel(await get_wheel_state(interaction.user.id)),
