@@ -133,6 +133,7 @@ class BlackjackView(discord.ui.View):
                 await self.disable_all_items()
                 await self.update_embed(interaction=interaction, footer="🤝 Draw. Bet returned.", color=discord.Color.gold(), reveal_dealer=True)
                 self.game_over = True
+                active_blackjack_tables.discard(self.uid)
             else:
                 await self.end_game(f"💀 You lose {self.bet}.", win=False)
 
