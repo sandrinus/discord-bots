@@ -12,25 +12,10 @@ SYMBOL_COEFFICIENTS = {
     "🍇": 5, "🔔": 7, "🍀": 10
 }
 
-async def slot_machine_run(interaction, bet, msg):
-    uid = interaction.user.id
-
-    # No per-user lock here! Allow concurrent spins.
-
-    bal, _ = await get_balance(uid, interaction.user.name)
-    if bet and bal < bet:
-        try:
-            await interaction.response.send_message(f"❌ Not enough coins! You have {bal}.", ephemeral=True)
-        except discord.errors.NotFound:
-            pass
-        return
-
-    try:
-        await interaction.response.defer(ephemeral=True)
-    except (discord.errors.NotFound, discord.errors.InteractionResponded):
-        return
-
+async def slot_machine_run(msg, bet, uid, username):
     reels = ["❓"] * 3
+    embed = discord.Embed(title="🎰 Rolling...", description=" | ".join(reels), color=discord.Color.gold())
+    await msg.edit(embed=embed)
 
     for i in range(3):
         await asyncio.sleep(random.uniform(0.4, 0.9))
@@ -38,37 +23,41 @@ async def slot_machine_run(interaction, bet, msg):
         embed.description = " | ".join(reels)
         await msg.edit(embed=embed)
 
-    await asyncio.sleep(0.3)
     result = (reels[0] == reels[1] == reels[2])
-    if result:
-        m = SYMBOL_COEFFICIENTS[reels[0]]
-        bonus = 1
-        if bet == 1000:
-            bonus = 4
-        elif bet == 500:
-            bonus = 2
-        elif bet == 100:
-            bonus = 1.5
-        win = int(bet * m * bonus)
-        net_change = win - bet  # net gain
-
-    else:
-        win = 0
-        net_change = -bet  # net loss
-
-    # Atomically update balance, ensuring no overdraft
-    success = await update_balance_atomic(uid, net_change, bet)
-    if not success:
-        # The balance check above might be stale due to concurrent spins
+    bal, _ = await get_balance(uid, username)
+    if bet and bal < bet:
         embed.color = discord.Color.red()
-        embed.add_field(name="❌ Error", value="Balance changed during spin, insufficient funds.")
+        embed.add_field(name="❌ Error", value=f"Not enough coins! You have {bal}.")
     else:
-        if win > 0 or (result and win==bet==0):
-            embed.color = discord.Color.green()
-            embed.add_field(name="🎉 Win", value=f"You won {win} coins!")
+        if result:
+            m = SYMBOL_COEFFICIENTS[reels[0]]
+            bonus = 1
+            if bet == 1000:
+                bonus = 4
+            elif bet == 500:
+                bonus = 2
+            elif bet == 100:
+                bonus = 1.5
+            win = int(bet * m * bonus)
+            net_change = win - bet  # net gain
+    
         else:
+            win = 0
+            net_change = -bet  # net loss
+    
+        # Atomically update balance, ensuring no overdraft
+        success = await update_balance_atomic(uid, net_change, bet)
+        if not success:
+            # The balance check above might be stale due to concurrent spins
             embed.color = discord.Color.red()
-            embed.add_field(name="😢 Loss", value=f"You lost {bet} coins.")
+            embed.add_field(name="❌ Error", value="Balance changed during spin, insufficient funds.")
+        else:
+            if win > 0 or (result and win==bet==0):
+                embed.color = discord.Color.green()
+                embed.add_field(name="🎉 Win", value=f"You won {win} coins!")
+            else:
+                embed.color = discord.Color.red()
+                embed.add_field(name="😢 Loss", value=f"You lost {bet} coins.")
 
     # Fetch updated balance to show in footer
     bal, _ = await get_balance(uid, interaction.user.name)
@@ -92,11 +81,8 @@ class SlotView(discord.ui.View):
         # Edit original message immediately to start animation (no buttons)
         await interaction.response.edit_message(embed=embed, view=view)
 
-        # Use interaction.message instead of interaction.original_message()
-        original_msg = interaction.message
-
         # Run animation in the original message asynchronously
-        asyncio.create_task(slot_machine_run(interaction, bet, original_msg))
+        asyncio.create_task(slot_machine_run(interaction.message, bet, interaction.user.id, interaction.user.name))
     
         # Immediately spawn a new message with fresh buttons for user
         await interaction.followup.send("🎰 Ready for another spin?", view=SlotView(), ephemeral=True)
