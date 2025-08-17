@@ -12,8 +12,6 @@ SYMBOL_COEFFICIENTS = {
     "🍇": 5, "🔔": 7, "🍀": 10
 }
 
-orig_msg = None
-
 async def slot_machine_run(msg, bet, uid, username):
     reels = ["❓"] * 3
     embed = discord.Embed(title="🎰 Rolling...", description=" | ".join(reels), color=discord.Color.gold())
@@ -67,16 +65,19 @@ async def slot_machine_run(msg, bet, uid, username):
 
 # SlotView UI class with buttons
 class SlotView(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=180)
+    def __init__(self, msg):
+        super().__init__(timeout=60)
 
     async def common(self, interaction, bet):
         if not can_act(interaction.user.id, 0.5):
             await interaction.response.send_message("⏱️ Cooldown: wait a few seconds before spinning again!", ephemeral=True)
             return
-
+        
+        embed = discord.Embed(title="🎰 Rolling...", description=" | ".join(["❓"]*3), color=discord.Color.gold())
+        await self.msg.edit(embed=embed)
+        
         # Run animation in the original message asynchronously
-        asyncio.create_task(slot_machine_run(orig_msg, bet, interaction.user.id, interaction.user.name))
+        asyncio.create_task(slot_machine_run(self.msg, bet, interaction.user.id, interaction.user.name))
     
         # Immediately spawn a new message with fresh buttons for user
         await interaction.followup.send("🎰 Ready for another spin?", view=SlotView(), ephemeral=True)
