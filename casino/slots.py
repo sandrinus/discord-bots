@@ -72,12 +72,7 @@ class SlotView(discord.ui.View):
         if not can_act(interaction.user.id, 0.5):
             await interaction.response.send_message("⏱️ Cooldown: wait a few seconds before spinning again!", ephemeral=True)
             return
-    
-        # Remove buttons from the original message and start animation
-        embed = discord.Embed(title="🎰 Rolling...", description=" | ".join(["❓"]*3), color=discord.Color.gold())
         
-        # Edit original message immediately to start animation (no buttons)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
         bot_msg = await interaction.original_response()
 
         # Run animation in the original message asynchronously
