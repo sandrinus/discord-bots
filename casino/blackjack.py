@@ -64,15 +64,17 @@ class BlackjackView(discord.ui.View):
             if self.message:
                 await self.message.edit(embed=embed, view=self)
             
-    async def end_game(self, result_text, win=False, bonus=False):
+    async def end_game(self, result_text, win=False, bonus=False, draw=False):
         self.game_over = True
         await self.disable_all_items()
-
+            
         if win:
             if bonus:
                 await update_balance(self.uid, self.bet*5, self.bet)
             else:
                 await update_balance(self.uid, self.bet, self.bet)
+        elif draw:
+            pass
         else:
             await update_balance(self.uid, -self.bet, self.bet)
 
@@ -130,10 +132,7 @@ class BlackjackView(discord.ui.View):
                 else:
                     await self.end_game(f"🎉 You win! +{self.bet}", win=True)
             elif player_total == dealer_total:
-                await self.disable_all_items()
-                await self.update_embed(interaction=interaction, footer="🤝 Draw. Bet returned.", color=discord.Color.gold(), reveal_dealer=True)
-                self.game_over = True
-                active_blackjack_tables.discard(self.uid)
+                await self.end_game(f"🤝 Draw. Bet returned.", win=False, bonus=False, draw=True)
             else:
                 await self.end_game(f"💀 You lose {self.bet}.", win=False)
 
