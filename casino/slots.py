@@ -65,23 +65,36 @@ async def slot_machine_run(msg, bet, uid, username):
 
 # SlotView UI class with buttons
 class SlotView(discord.ui.View):
-    def __init__(self, msg):
+    def __init__(self, msg=None):
         super().__init__(timeout=60)
-        self.msg = msg
+        self.msg = msg  # store original ephemeral message
 
     async def common(self, interaction, bet):
-        if not can_act(interaction.user.id, 0.5):
-            await interaction.response.send_message("⏱️ Cooldown: wait a few seconds before spinning again!", ephemeral=True)
+        if not await can_act(interaction.user.id, 0.5):
+            await interaction.response.send_message(
+                "⏱️ Cooldown: wait a few seconds before spinning again!", ephemeral=True
+            )
             return
-        
-        embed = discord.Embed(title="🎰 Rolling...", description=" | ".join(["❓"]*3), color=discord.Color.gold())
-        await self.msg.edit(embed=embed)
-        
-        # Run animation in the original message asynchronously
-        asyncio.create_task(slot_machine_run(self.msg, bet, interaction.user.id, interaction.user.name))
-    
-        # Immediately spawn a new message with fresh buttons for user
-        await interaction.followup.send("🎰 Ready for another spin?", view=SlotView(), ephemeral=True)
+
+        if self.msg:
+            # Replace original message with animation
+            embed = discord.Embed(
+                title="🎰 Rolling...",
+                description=" | ".join(["❓"] * 3),
+                color=discord.Color.gold()
+            )
+            await self.msg.edit(embed=embed, view=None)
+
+            # Run animation asynchronously
+            asyncio.create_task(
+                slot_machine_run(self.msg, bet, interaction.user.id, interaction.user.name)
+            )
+
+        # Immediately spawn a new ephemeral message with buttons for next spin
+        new_buttons = SlotView()
+        await interaction.followup.send(
+            "🎰 Ready for another spin?", view=new_buttons, ephemeral=True
+        )
 
     @discord.ui.button(label="Spin (Free)", style=discord.ButtonStyle.secondary, custom_id="slot_spin")
     async def spin(self, interaction, button: discord.ui.Button): await self.common(interaction, 0)
