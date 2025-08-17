@@ -86,7 +86,7 @@ class SlotView(discord.ui.View):
             return
 
         # Grab the original message
-        original_msg = interaction.message
+        original_msg =  await interaction.original_message()
     
         # Remove buttons from the original message and start animation
         view = None  # removes all buttons
