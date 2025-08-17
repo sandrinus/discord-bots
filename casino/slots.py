@@ -97,6 +97,7 @@ class SlotView(discord.ui.View):
             "🎰 Ready for another spin?", view=SlotView(), ephemeral=True, wait=True
         )
         new_buttons = SlotView(new_msg)
+        await new_msg.edit(view=new_buttons)
 
     @discord.ui.button(label="Spin (Free)", style=discord.ButtonStyle.secondary, custom_id="slot_spin")
     async def spin(self, interaction, button: discord.ui.Button): await self.common(interaction, 0)
