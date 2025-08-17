@@ -84,9 +84,6 @@ class SlotView(discord.ui.View):
         if not can_act(interaction.user.id, 0.5):
             await interaction.response.send_message("⏱️ Cooldown: wait a few seconds before spinning again!", ephemeral=True)
             return
-
-        # Grab the original message
-        original_msg =  await interaction.original_message()
     
         # Remove buttons from the original message and start animation
         view = None  # removes all buttons
@@ -94,6 +91,12 @@ class SlotView(discord.ui.View):
         
         # Edit original message immediately to start animation (no buttons)
         await interaction.response.edit_message(embed=embed, view=view)
+
+        # Edit the original message
+        await interaction.response.edit_message(embed=embed, view=view)
+
+        # Use interaction.message instead of interaction.original_message()
+        original_msg = interaction.message
 
         # Run animation in the original message asynchronously
         asyncio.create_task(slot_machine_run(interaction, bet, original_msg))
