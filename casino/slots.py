@@ -12,7 +12,7 @@ SYMBOL_COEFFICIENTS = {
     "🍇": 5, "🔔": 7, "🍀": 10
 }
 
-async def slot_machine_run(interaction, bet):
+async def slot_machine_run(interaction, bet, msg):
     uid = interaction.user.id
 
     # No per-user lock here! Allow concurrent spins.
@@ -31,8 +31,6 @@ async def slot_machine_run(interaction, bet):
         return
 
     reels = ["❓"] * 3
-    embed = discord.Embed(title="🎰 Rolling...", description=" | ".join(reels), color=discord.Color.gold())
-    msg = await interaction.followup.send(embed=embed, ephemeral=True)
 
     for i in range(3):
         await asyncio.sleep(random.uniform(0.4, 0.9))
@@ -87,14 +85,21 @@ class SlotView(discord.ui.View):
             await interaction.response.send_message("⏱️ Cooldown: wait a few seconds before spinning again!", ephemeral=True)
             return
 
-        # Delete the clicked message immediately to avoid clutter
-        await interaction.message.delete()
+        # Grab the original message
+        original_msg = interaction.message
+    
+        # Remove buttons from the original message and start animation
+        view = None  # removes all buttons
+        embed = discord.Embed(title="🎰 Rolling...", description=" | ".join(["❓"]*3), color=discord.Color.gold())
+        
+        # Edit original message immediately to start animation (no buttons)
+        await interaction.response.edit_message(embed=embed, view=view)
 
-        # Immediately send a brand-new slot machine with fresh buttons
+        # Run animation in the original message asynchronously
+        asyncio.create_task(slot_machine_run(original_msg, bet))
+    
+        # Immediately spawn a new message with fresh buttons for user
         await interaction.followup.send("🎰 Ready for another spin?", view=SlotView(), ephemeral=True)
-
-        # Run this spin animation in background
-        await slot_machine_run(interaction, bet)
 
     @discord.ui.button(label="Spin (Free)", style=discord.ButtonStyle.secondary, custom_id="slot_spin")
     async def spin(self, interaction, button: discord.ui.Button): await self.common(interaction, 0)
