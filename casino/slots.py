@@ -92,10 +92,11 @@ class SlotView(discord.ui.View):
                 slot_machine_run(self.msg, bet, interaction.user.id, interaction.user.name)
             )
 
-        # Immediately spawn a new ephemeral message with buttons for next spin
-        await interaction.followup.send(
-            "🎰 Ready for another spin?", view=SlotView(), ephemeral=True
+        # Spawn new ephemeral message and get its message object
+        new_msg = await interaction.followup.send(
+            "🎰 Ready for another spin?", view=SlotView(), ephemeral=True, wait=True
         )
+        new_buttons = SlotView(new_msg)
 
     @discord.ui.button(label="Spin (Free)", style=discord.ButtonStyle.secondary, custom_id="slot_spin")
     async def spin(self, interaction, button: discord.ui.Button): await self.common(interaction, 0)
