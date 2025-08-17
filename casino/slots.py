@@ -67,6 +67,7 @@ async def slot_machine_run(msg, bet, uid, username):
 class SlotView(discord.ui.View):
     def __init__(self, msg):
         super().__init__(timeout=60)
+        self.msg = msg
 
     async def common(self, interaction, bet):
         if not can_act(interaction.user.id, 0.5):
