@@ -77,7 +77,7 @@ class SlotView(discord.ui.View):
         embed = discord.Embed(title="🎰 Rolling...", description=" | ".join(["❓"]*3), color=discord.Color.gold())
         
         # Edit original message immediately to start animation (no buttons)
-        await interaction.response.send_message(embed=embed, view=None)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
         bot_msg = await interaction.original_response()
 
         # Run animation in the original message asynchronously
