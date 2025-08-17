@@ -58,8 +58,7 @@ class CasinoHomeView(discord.ui.View):
     async def goto_slots(self, interaction: discord.Interaction, button: discord.ui.Button):
         # Show slot machine UI privately
         await interaction.response.send_message(
-            "🎰 **Slot Machine**\nPress a button below to spin!\nUse **Show Coefficients** to view odds.",
-            view=SlotView(),
+            "🎰 **Slot Machine**\nPress a button below to spin!\nUse **Show Coefficients** to view odds.",,
             ephemeral=True
         )
         msg = await interaction.original_response()
