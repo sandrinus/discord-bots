@@ -96,7 +96,7 @@ class SlotView(discord.ui.View):
         await interaction.response.edit_message(embed=embed, view=view)
 
         # Run animation in the original message asynchronously
-        asyncio.create_task(slot_machine_run(original_msg, bet))
+        asyncio.create_task(slot_machine_run(interaction, bet, original_msg))
     
         # Immediately spawn a new message with fresh buttons for user
         await interaction.followup.send("🎰 Ready for another spin?", view=SlotView(), ephemeral=True)
