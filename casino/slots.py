@@ -92,9 +92,6 @@ class SlotView(discord.ui.View):
         # Edit original message immediately to start animation (no buttons)
         await interaction.response.edit_message(embed=embed, view=view)
 
-        # Edit the original message
-        await interaction.response.edit_message(embed=embed, view=view)
-
         # Use interaction.message instead of interaction.original_message()
         original_msg = interaction.message
 
