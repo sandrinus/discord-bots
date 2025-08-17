@@ -4,7 +4,7 @@ import time
 import os
 from datetime import datetime
 from database import init_pool, get_pool, init_db, get_balance, update_balance, get_user_lock
-from slots import SlotView, orig_msg
+from slots import SlotView
 from blackjack import BlackjackBetView
 from wheel_of_fortune import FortuneView, embed_wheel, get_wheel_state
 
@@ -62,8 +62,10 @@ class CasinoHomeView(discord.ui.View):
             view=SlotView(),
             ephemeral=True
         )
-        orig_msg = await interaction.original_response()
-
+        msg = await interaction.original_response()
+        slot_view = SlotView(msg)
+        await msg.edit(view=slot_view)
+        
     @discord.ui.button(label="🃏 Go to Blackjack", style=discord.ButtonStyle.success, custom_id="goto_blackjack")
     async def goto_blackjack(self, interaction: discord.Interaction, button: discord.ui.Button):
         # Show Blackjack UI privately
