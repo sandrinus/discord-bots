@@ -85,7 +85,7 @@ class SlotView(discord.ui.View):
                 description=" | ".join(["❓"] * 3),
                 color=discord.Color.gold()
             )
-            await self.msg.edit('', embed=embed, view=None)
+            await self.msg.edit(content=None, embed=embed, view=None)
 
             # Run animation asynchronously
             asyncio.create_task(
