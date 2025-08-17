@@ -76,6 +76,8 @@ class SlotView(discord.ui.View):
             )
             return
 
+        await interaction.response.defer(ephemeral=True)
+
         if self.msg:
             # Replace original message with animation
             embed = discord.Embed(
@@ -83,7 +85,7 @@ class SlotView(discord.ui.View):
                 description=" | ".join(["❓"] * 3),
                 color=discord.Color.gold()
             )
-            await self.msg.edit(embed=embed, view=None)
+            await self.msg.edit('', embed=embed, view=None)
 
             # Run animation asynchronously
             asyncio.create_task(
@@ -91,9 +93,8 @@ class SlotView(discord.ui.View):
             )
 
         # Immediately spawn a new ephemeral message with buttons for next spin
-        new_buttons = SlotView()
         await interaction.followup.send(
-            "🎰 Ready for another spin?", view=new_buttons, ephemeral=True
+            "🎰 Ready for another spin?", view=SlotView(), ephemeral=True
         )
 
     @discord.ui.button(label="Spin (Free)", style=discord.ButtonStyle.secondary, custom_id="slot_spin")
