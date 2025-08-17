@@ -40,7 +40,6 @@ async def slot_machine_run(msg, bet, uid, username):
                 bonus = 1.5
             win = int(bet * m * bonus)
             net_change = win - bet  # net gain
-    
         else:
             win = 0
             net_change = -bet  # net loss
@@ -60,7 +59,7 @@ async def slot_machine_run(msg, bet, uid, username):
                 embed.add_field(name="😢 Loss", value=f"You lost {bet} coins.")
 
     # Fetch updated balance to show in footer
-    bal, _ = await get_balance(uid, interaction.user.name)
+    bal, _ = await get_balance(uid, username)
     embed.set_footer(text=f"Balance: {bal}")
     await msg.edit(embed=embed)
 
@@ -75,14 +74,14 @@ class SlotView(discord.ui.View):
             return
     
         # Remove buttons from the original message and start animation
-        view = None  # removes all buttons
         embed = discord.Embed(title="🎰 Rolling...", description=" | ".join(["❓"]*3), color=discord.Color.gold())
         
         # Edit original message immediately to start animation (no buttons)
-        await interaction.response.edit_message(embed=embed, view=view)
+        await interaction.response.send_message(embed=embed, view=None)
+        bot_msg = await interaction.original_response()
 
         # Run animation in the original message asynchronously
-        asyncio.create_task(slot_machine_run(interaction.message, bet, interaction.user.id, interaction.user.name))
+        asyncio.create_task(slot_machine_run(bot_msg, bet, interaction.user.id, interaction.user.name))
     
         # Immediately spawn a new message with fresh buttons for user
         await interaction.followup.send("🎰 Ready for another spin?", view=SlotView(), ephemeral=True)
