@@ -101,7 +101,8 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
             half = bal // 2
             rounded_half = round_up_to_50(half)
             win_amount_delta = -rounded_half
-            msg_text = f"➗ You hit `/2`! You lose half your coins: **{half}**."
+            bet_amount_delta = rounded_half
+            msg_text = f"➗ You hit `/2`! You lose half your coins: **{rounded_half}**."
         else:
             if result > 0:
                 win_amount_delta = result
