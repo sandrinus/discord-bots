@@ -1,3 +1,4 @@
+from main import log  # import your logging function
 import discord
 import random
 import asyncio
@@ -57,26 +58,33 @@ class BlackjackView(discord.ui.View):
             embed.set_footer(text=footer)
     
         if interaction is not None:
-            # edit the original interaction response (works after defer)
             await interaction.edit_original_response(embed=embed, view=self)
         else:
-            # fallback to editing stored message if available
             if self.message:
                 await self.message.edit(embed=embed, view=self)
-            
+
     async def end_game(self, result_text, win=False, bonus=False, draw=False):
         self.game_over = True
         await self.disable_all_items()
-            
+        
+        amount_change = 0  # for logging
+        
         if win:
             if bonus:
                 await update_balance(self.uid, self.bet*5, self.bet)
+                amount_change = self.bet*5
             else:
                 await update_balance(self.uid, self.bet, self.bet)
+                amount_change = self.bet
         elif draw:
-            pass
+            amount_change = 0
         else:
             await update_balance(self.uid, -self.bet, self.bet)
+            amount_change = -self.bet
+
+        # Log only win/loss amounts
+        if amount_change != 0:
+            await log(f"User {self.uid} {'won' if amount_change > 0 else 'lost'} {abs(amount_change)} coins in blackjack")
 
         embed = discord.Embed(
             title="🃏 Blackjack",
@@ -94,7 +102,6 @@ class BlackjackView(discord.ui.View):
         )
         embed.set_footer(text=result_text)
 
-        # Just edit the existing ephemeral message
         await self.message.edit(embed=embed, view=self)
         active_blackjack_tables.discard(self.uid)
 
@@ -116,7 +123,6 @@ class BlackjackView(discord.ui.View):
     
             while True:
                 dealer_total = hand_value(self.dealer_hand)
-    
                 if dealer_total < player_total and dealer_total < 21:
                     self.dealer_hand.append(draw_card())
                     await self.update_embed(interaction=interaction, reveal_dealer=True)
@@ -132,7 +138,7 @@ class BlackjackView(discord.ui.View):
                 else:
                     await self.end_game(f"🎉 You win! +{self.bet}", win=True)
             elif player_total == dealer_total:
-                await self.end_game(f"🤝 Draw. Bet returned.", win=False, bonus=False, draw=True)
+                await self.end_game(f"🤝 Draw. Bet returned.", draw=True)
             else:
                 await self.end_game(f"💀 You lose {self.bet}.", win=False)
 
@@ -142,7 +148,6 @@ class BlackjackView(discord.ui.View):
             await interaction.response.send_message("❌ Not your game!", ephemeral=True)
             return
         
-        # Prevent spam clicks
         button.disabled = True
         await self.message.edit(view=self)
 
@@ -153,7 +158,6 @@ class BlackjackView(discord.ui.View):
             await self.end_game(f"💥 Bust! You lose {self.bet}.", win=False)
             await interaction.response.defer()
         else:
-            # Re-enable buttons after valid hit
             button.disabled = False
             await self.message.edit(view=self)
             await self.update_embed()
