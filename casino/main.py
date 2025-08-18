@@ -30,7 +30,12 @@ async def flush_logs_periodically():
     while True:
         await asyncio.sleep(60)  # check every minute
         async with buffer_lock:
-            if len(log_buffer) >= 500 or (len(log_buffer) > 0 and (time.time() - start_time.timestamp()) % 300 < 60):
+    global last_flush_time
+    while True:
+        await asyncio.sleep(60)  # check every minute
+        async with buffer_lock:
+            now = time.time()
+            if len(log_buffer) >= 500 or (len(log_buffer) > 0 and (now - last_flush_time) >= 300):
                 
                 # Write to local .txt
                 with open(log_filename, "a", encoding="utf-8") as f:
