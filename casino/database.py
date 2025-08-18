@@ -72,6 +72,16 @@ async def init_db():
                     ALTER TABLE user_accounts ADD COLUMN {column} {definition}
                 """)
 
+        # Logs table
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS logs (
+                id SERIAL PRIMARY KEY,
+                filename TEXT,
+                content TEXT,
+                created_at BIGINT DEFAULT EXTRACT(EPOCH FROM now())
+            )
+        """)
+
 # Get balance and total bet for a user
 async def get_balance(user_id: int, username: str = ""):
     async with pool.acquire() as conn:
