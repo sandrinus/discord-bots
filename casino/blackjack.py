@@ -32,15 +32,14 @@ class BlackjackView(discord.ui.View):
         super().__init__(timeout=60)
         self.uid = uid
         self.bet = bet
-
-    async def on_timeout(self):
-        active_blackjack_tables.discard(self.uid)
-
         self.player_hand = [draw_card(), draw_card()]
         self.dealer_hand = [draw_card(), draw_card()]
         self.game_over = False
 
         self.message = None
+
+    async def on_timeout(self):
+        active_blackjack_tables.discard(self.uid)
 
     async def disable_all_items(self):
         for item in self.children:
