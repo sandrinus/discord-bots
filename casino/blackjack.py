@@ -191,6 +191,10 @@ class BlackjackBetView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=600)
 
+    @discord.ui.button(label="Free", style=discord.ButtonStyle.success, custom_id="blackjack_bet_50")
+    async def bet50(self, interaction, button: discord.ui.Button):
+        await start_blackjack(interaction, 0)
+
     @discord.ui.button(label="Bet 50", style=discord.ButtonStyle.success, custom_id="blackjack_bet_50")
     async def bet50(self, interaction, button: discord.ui.Button):
         await start_blackjack(interaction, 50)
