@@ -4,8 +4,8 @@ import asyncio
 from database import get_balance, update_balance_atomic, can_act
 
 SLOT_SYMBOLS = (
-    ["🍒"] * 15 + ["🍋"] * 13 + ["🍉"] * 9 +
-    ["🍇"] * 7 + ["🔔"] * 5 + ["🍀"] * 3
+    ["🍒"] * 39 + ["🍋"] * 28 + ["🍉"] * 15 +
+    ["🍇"] * 10 + ["🔔"] * 5 + ["🍀"] * 3
 )
 SYMBOL_COEFFICIENTS = {
     "🍒": 2, "🍋": 3, "🍉": 4,
