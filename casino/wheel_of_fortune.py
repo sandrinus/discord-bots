@@ -2,13 +2,14 @@ import discord
 import random
 import asyncio
 from database import get_pool, get_balance, update_balance, get_user_lock
+from main import log  # import the logger function from main.py
 
 wheel_of_fortune = ["x2", 500, -1000, 350, "/2", -750, 1000, -250]
-active_wheel_spins = set() # set to control active spins so users cannot spam
+active_wheel_spins = set()  # prevent spamming
 
 def embed_wheel(i):
     def fmt(val):
-        return str(val).center(5) 
+        return str(val).center(5)
     desc = f"""
           {fmt('🔻')}
           {fmt('🔻')}
@@ -24,7 +25,7 @@ def embed_wheel(i):
  {fmt(wheel_of_fortune[(i+3)%len(wheel_of_fortune)])}   /   |   \\   {fmt(wheel_of_fortune[(i+5)%len(wheel_of_fortune)])}
              |
            {fmt(wheel_of_fortune[(i+4)%len(wheel_of_fortune)])}"""
-    
+
     embed = discord.Embed(title="Wheel of Fortune 🎯", description=f"```{desc}```", color=0xFFD700)
     return embed
 
@@ -37,7 +38,7 @@ async def get_wheel_state(user_id: int) -> int:
             "SELECT wheel_state FROM user_accounts WHERE user_id = $1",
             user_id
         )
-        return row['wheel_state'] if row else 0  # default to 0 if missing
+        return row['wheel_state'] if row else 0
 
 async def update_wheel_state(user_id: int, state: int):
     async with get_pool().acquire() as conn:
@@ -53,6 +54,7 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
         await interaction.followup.send(
             "⚠️ You are already spinning the wheel!", ephemeral=True
         )
+        await log(f"User {interaction.user} ({uid}) tried to spin while already spinning", level="WARNING")
         return
     active_wheel_spins.add(uid)
 
@@ -61,15 +63,19 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
     async with lock:
         bal, _ = await get_balance(uid, interaction.user.name)
         if bal < bet:
+            msg = f"❌ Not enough coins! You need at least {bet}."
             if interaction.response.is_done():
-                await interaction.followup.send(f"❌ Not enough coins! You need at least {bet}.", ephemeral=True)
+                await interaction.followup.send(msg, ephemeral=True)
             else:
-                await interaction.response.send_message(f"❌ Not enough coins! You need at least {bet}.", ephemeral=True)
+                await interaction.response.send_message(msg, ephemeral=True)
+            await log(f"User {interaction.user} ({uid}) tried to spin but had insufficient balance: {bal} < {bet}", level="WARNING")
+            active_wheel_spins.discard(uid)
             return
-        
+
         wheel_state = await get_wheel_state(uid)
 
     await interaction.edit_original_response(embed=embed_wheel(wheel_state), view=view)
+    await log(f"User {interaction.user} ({uid}) started a wheel spin with balance {bal} coins")
 
     full_rotations = random.randint(2, 4)
     offset = random.randint(0, len(wheel_of_fortune) - 1)
@@ -83,6 +89,7 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
         try:
             await interaction.edit_original_response(embed=embed_wheel(pos), view=view)
         except discord.errors.NotFound:
+            active_wheel_spins.discard(uid)
             return
 
     async with lock:
@@ -93,7 +100,6 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
         bet_amount_delta = 0
 
         if result == "x2":
-            # double balance means add current balance (win_amount_delta)
             win_amount_delta = bal
             msg_text = f"✨ You hit `x2`! Your balance is doubled! Now you have **{bal * 2}** coins!"
         elif result == "/2":
@@ -109,37 +115,32 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
                 msg_text = f"You won **{result}** coins!"
             else:
                 win_amount_delta = result
-                bet_amount_delta = result # negative amount increases total_bet by abs(value)
+                bet_amount_delta = result
                 msg_text = f"You lost **{abs(result)}** coins!"
 
         await update_balance(uid, win_amount_delta, bet_amount_delta)
+        await log(f"User {interaction.user} ({uid}) spin result: {result}, balance change: {win_amount_delta}, total bet change: {bet_amount_delta}")
 
     final_embed = embed_wheel(final_index)
     final_embed.add_field(name="Result", value=msg_text, inline=False)
     await interaction.edit_original_response(embed=final_embed, view=view)
     active_wheel_spins.discard(uid)
 
-
+# ------------------ UI View ------------------
 class FortuneView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=600)
 
     @discord.ui.button(label="Spin Wheel 🎯", style=discord.ButtonStyle.success, custom_id="wheel_spin")
     async def spin(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # Disable the button to prevent multiple clicks
         button.disabled = True
-        await interaction.response.edit_message(view=self)  # FIRST response
-
-        # Run the spin logic (which includes defer and animations)
+        await interaction.response.edit_message(view=self)
         await spin_wheel_logic(interaction, view=self)
-
-        # Re-enable the button after the spin
         button.disabled = False
         await interaction.edit_original_response(view=self)
 
     @discord.ui.button(label="Check Balance", style=discord.ButtonStyle.primary, custom_id="wheel_check")
-    async def check(self, interaction, button: discord.ui.Button):
+    async def check(self, interaction, button):
         bal, total = await get_balance(interaction.user.id, interaction.user.name)
         await interaction.response.send_message(f"💰 Balance: {bal}\n🧮 Total Bet: {total}", ephemeral=True)
-
-        
+        await log(f"User {interaction.user} ({interaction.user.id}) checked balance via wheel UI: {bal} coins")
