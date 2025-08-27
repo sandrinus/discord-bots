@@ -72,7 +72,7 @@ class BlackjackView(discord.ui.View):
             
         if win:
             if bonus:
-                await update_balance(self.uid, self.bet*5, self.bet)
+                await update_balance(self.uid, self.bet*6, self.bet)
             else:
                 await update_balance(self.uid, self.bet, self.bet)
         elif draw:
@@ -130,7 +130,7 @@ class BlackjackView(discord.ui.View):
             
             if dealer_total > 21 or player_total > dealer_total:
                 if player_total == 21:
-                    await self.end_game(f"🎉 You win! +{self.bet * 5}", win=True, bonus=True)
+                    await self.end_game(f"🎉 You win! +{self.bet * 6}", win=True, bonus=True)
                 else:
                     await self.end_game(f"🎉 You win! +{self.bet}", win=True)
             elif player_total == dealer_total:
