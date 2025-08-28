@@ -78,7 +78,7 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
 
     for step in range(winner+1):
         pos = (step + wheel_state) % len(wheel_of_fortune)
-        delay = 0.05 + ((step / winner)**3) * 1.3
+        delay = 0.05 + ((step / winner)**3)
         await asyncio.sleep(delay)
         try:
             await interaction.edit_original_response(embed=embed_wheel(pos), view=view)
