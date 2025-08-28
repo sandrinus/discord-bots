@@ -3,27 +3,27 @@ import random
 import asyncio
 from database import get_pool, get_balance, update_balance, get_user_lock
 
-wheel_of_fortune = ["x2", 500, -1000, 350, "/2", -750, 1000, -250]
+wheel_of_fortune = [100, '🔄️', -10, 15, -20, '🔄️', -100, '🔄️', 10, -15, 20, '🔄️']
 active_wheel_spins = set() # set to control active spins so users cannot spam
 
 def embed_wheel(i):
     def fmt(val):
-        return str(val).center(5) 
+        return str(val).center(4) 
     desc = f"""
           {fmt('🔻')}
           {fmt('🔻')}
           {fmt('🔻')}
-           {fmt(wheel_of_fortune[i%len(wheel_of_fortune)])}
-             |
- {fmt(wheel_of_fortune[(i+1)%len(wheel_of_fortune)])}   \\   |   /   {fmt(wheel_of_fortune[(i+7)%len(wheel_of_fortune)])}
-      \\   \\  |  /   /
-       \\   \\ | /   /
-  {fmt(wheel_of_fortune[(i+2)%len(wheel_of_fortune)])} ----[●]---- {fmt(wheel_of_fortune[(i+6)%len(wheel_of_fortune)])}
-       /   / | \\   \\
-      /   /  |  \\   \\
- {fmt(wheel_of_fortune[(i+3)%len(wheel_of_fortune)])}   /   |   \\   {fmt(wheel_of_fortune[(i+5)%len(wheel_of_fortune)])}
-             |
-           {fmt(wheel_of_fortune[(i+4)%len(wheel_of_fortune)])}"""
+          {fmt(wheel_of_fortune[i%len(wheel_of_fortune)])}
+    {fmt(wheel_of_fortune[(i+1)%len(wheel_of_fortune)])}    |   {fmt(wheel_of_fortune[(i+11)%len(wheel_of_fortune)])}
+{fmt(wheel_of_fortune[(i+2)%len(wheel_of_fortune)])}    \\   |   /    {fmt(wheel_of_fortune[(i+10)%len(wheel_of_fortune)])}
+   \\     \\  |  /     /
+    \\     \\ | /     /
+{fmt(wheel_of_fortune[(i+3)%len(wheel_of_fortune)])} ------[●]------ {fmt(wheel_of_fortune[(i+9)%len(wheel_of_fortune)])}
+    /     / | \\     \\
+   /     /  |  \\     \\
+{fmt(wheel_of_fortune[(i+4)%len(wheel_of_fortune)])}    /   |   \\    {fmt(wheel_of_fortune[(i+8)%len(wheel_of_fortune)])}
+    {fmt(wheel_of_fortune[(i+5)%len(wheel_of_fortune)])}    |   {fmt(wheel_of_fortune[(i+7)%len(wheel_of_fortune)])}             
+          {fmt(wheel_of_fortune[(i+6)%len(wheel_of_fortune)])}"""
     
     embed = discord.Embed(title="Wheel of Fortune 🎯", description=f"```{desc}```", color=0xFFD700)
     return embed
@@ -92,25 +92,15 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
         win_amount_delta = 0
         bet_amount_delta = 0
 
-        if result == "x2":
-            # double balance means add current balance (win_amount_delta)
-            win_amount_delta = bal
-            msg_text = f"✨ You hit `x2`! Your balance is doubled! Now you have **{bal * 2}** coins!"
-        elif result == "/2":
-            # round up balance to nearest 50, lose half of that
-            half = bal // 2
-            rounded_half = round_up_to_50(half)
-            win_amount_delta = -rounded_half
-            bet_amount_delta = rounded_half
-            msg_text = f"➗ You hit `/2`! You lose half your coins: **{rounded_half}**."
+        if result == '🔄️':
+            msg_text = f"You hit {result}. Spin again!"
         else:
-            if result > 0:
-                win_amount_delta = result
-                msg_text = f"You won **{result}** coins!"
+            win_amount_delta = round_up_to_50(bal * result // 100)
+            if (win_amount_delta <= 0):
+                bet_amount_delta = abs(win_amount_delta)
+                msg_text = f"You lost {result}% of your current balane🥲: {win_amount_delta}."
             else:
-                win_amount_delta = result
-                bet_amount_delta = result # negative amount increases total_bet by abs(value)
-                msg_text = f"You lost **{abs(result)}** coins!"
+                msg_text = f"You won {result}% of your current balane🤑: {win_amount_delta}."
 
         await update_balance(uid, win_amount_delta, bet_amount_delta)
 
