@@ -76,10 +76,7 @@ class CasinoHomeView(discord.ui.View):
 
     @discord.ui.button(label="🍀 Spin Fortune Wheel", style=discord.ButtonStyle.success, custom_id="goto_fortune")
     async def goto_fortune(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id == 675031676757475364:
-            await interaction.response.send_message(content="YOU BANNED FOR CHEATING!🤬 Think twice before doing it again.", ephemeral=True)
-        else:
-            await interaction.response.send_message(
+         await interaction.response.send_message(
                 "🍀 **Fortune Wheel**\nPress to spin and test your luck!",
                 embed=embed_wheel(await get_wheel_state(interaction.user.id)),
                 view=FortuneView(),
