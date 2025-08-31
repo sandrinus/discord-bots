@@ -11,6 +11,16 @@ DB_DSN = (
 # Connection pool - create once, reuse connections
 pool = None
 
+async def sync_banned_users():
+    """Ensure all users in user_accounts exist in banned_users."""
+    async with pool.acquire() as conn:
+        await conn.execute("""
+            INSERT INTO banned_users (user_id, username)
+            SELECT user_id, username
+            FROM user_accounts
+            ON CONFLICT (user_id) DO NOTHING
+        """)
+
 async def init_pool():
     global pool
     if pool is None:
@@ -31,11 +41,24 @@ async def init_db():
                 user_id BIGINT PRIMARY KEY,
                 username TEXT DEFAULT '',
                 balance INTEGER DEFAULT 30000 CHECK (balance >= 0),
-                total_bet BIGINT DEFAULT 0,
+                total_bet INTEGER DEFAULT 0,
                 last_daily_claim BIGINT DEFAULT 0,
                 wheel_state SMALLINT DEFAULT 0
             )
         """)
+
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS banned_users (
+                user_id BIGINT PRIMARY KEY,
+                username TEXT DEFAULT '',
+                ban_status BOOL DEFAULT false,
+                ban_time INT DEFAULT 0,
+                banned_games TEXT[] DEFAULT '{}'
+            )
+        """)
+
+        # Populate banned_users for all existing users
+        await sync_banned_users()
 
         # Make sure balance isn't already negative from old data
         await conn.execute("UPDATE user_accounts SET balance = 0 WHERE balance < 0;")
@@ -71,6 +94,28 @@ async def init_db():
                 await conn.execute(f"""
                     ALTER TABLE user_accounts ADD COLUMN {column} {definition}
                 """)
+
+async def get_users_info() -> list[dict]:
+    """
+    Retrieve all users from the database, sorted by balance DESC.
+    Returns a list of dicts with: user_id, username, balance, total_bet
+    """
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT user_id, username, balance, total_bet
+            FROM user_accounts
+            ORDER BY balance DESC
+        """)
+        # Convert to list of dicts
+        return [
+            {
+                "user_id": row["user_id"],
+                "username": row["username"],
+                "balance": row["balance"],
+                "total_bet": row["total_bet"]
+            }
+            for row in rows
+        ]
 
 # Get balance and total bet for a user
 async def get_balance(user_id: int, username: str = ""):
@@ -119,6 +164,52 @@ async def update_balance_atomic(user_id: int, net_change: int, bet_amount: int) 
             net_change, abs(bet_amount), user_id
         )
         return row is not None
+
+async def get_user_ban_status(user_id: int= None):
+    async with pool.acquire() as conn:
+        if user_id:
+            row = await conn.fetchrow(
+                """
+                SELECT ban_status, ban_time, banned_games
+                FROM banned_users
+                WHERE user_id = $1
+                """,
+                user_id
+            )
+        else:
+            row = await conn.fetchrow(
+                """
+                SELECT user_id, ban_status, ban_time, banned_games
+                FROM banned_users
+                """
+            )
+        if not row:
+            return {
+                "exists": False,
+                "ban_status": False,
+                "ban_time": 0,
+                "banned_games": []
+            }
+
+        return {
+            "exists": True,
+            "ban_status": row["ban_status"],
+            "ban_time": row["ban_time"],
+            "banned_games": row["banned_games"] or []
+        }
+
+async def ban_user_management(user_id: int, ban: bool, time: int, game: str):
+    async with pool.acquire() as conn:
+        await conn.execute(
+            """
+            UPDATE banned_users
+            SET ban_status = $1,
+                ban_time = $2,
+                banned_games = array(SELECT DISTINCT unnest(array_append(banned_games, $3)))
+            WHERE user_id = $4
+            """,
+            ban, time, game, user_id
+        )
 
 # User concurrency control (same logic as before)
 user_locks = {}
