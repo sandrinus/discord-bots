@@ -8,7 +8,6 @@ from admin_console import AdminView
 from slots import SlotView
 from blackjack import BlackjackBetView
 from wheel_of_fortune import FortuneView, embed_wheel, get_wheel_state
-from cash_or_crash import RevolverView
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix=None, intents=intents)
