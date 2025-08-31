@@ -14,7 +14,7 @@ class UserDatabaseSelect(discord.ui.Select):
             for u in users[:24]
         ]
 
-        super().__init__(placeholder="Select a user...", min_values=1, max_values=1, options=options)
+        super().__init__(placeholder="Select a user...", min_values=1, max_values=1, options=options, custom_id="admin_user_select")
 
     async def callback(self, interaction: discord.Interaction):
         if self.values[0] == "all":
@@ -63,7 +63,7 @@ class BanTimeSelect(discord.ui.Select):
             discord.SelectOption(label="Permanent", value="-1"),
             discord.SelectOption(label="Custom", value="custom")  # special value
         ]
-        super().__init__(placeholder="Select ban duration...", min_values=1, max_values=1, options=options)
+        super().__init__(placeholder="Select ban duration...", min_values=1, max_values=1, options=options, custom_id="admin_ban_time_select")
 
     async def callback(self, interaction: discord.Interaction):
         if self.values[0] == "custom":
@@ -101,7 +101,7 @@ class CustomBanTimeModal(discord.ui.Modal, title="Enter Custom Ban Time"):
 class GameSelect(discord.ui.Select):
     def __init__(self, games: list[str]):
         options = [discord.SelectOption(label=g, value=g) for g in games]
-        super().__init__(placeholder="Select game...", min_values=1, max_values=1, options=options)
+        super().__init__(placeholder="Select game...", min_values=1, max_values=1, options=options, custom_id="admin_game_select")
 
     async def callback(self, interaction: discord.Interaction):
         self.view.selected_game = self.values[0]
@@ -138,7 +138,7 @@ class AdminView(discord.ui.View):
         self.selected_game = None
         self.ban_duration = None
 
-    @discord.ui.button(label="Select User", style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="Select User", style=discord.ButtonStyle.primary, custom_id="admin_select_user")
     async def show_user_dropdown(self, interaction: discord.Interaction, button: discord.ui.Button):
         # Create a new view with the dropdowns only
         view = discord.ui.View()
@@ -150,14 +150,14 @@ class AdminView(discord.ui.View):
             "Choose a user and configure ban/balance:", view=view, ephemeral=True
         )
 
-    @discord.ui.button(label="Manage Balance", style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="Manage Balance", style=discord.ButtonStyle.primary, custom_id="admin_manage_balance")
     async def manage_balance(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not self.selected_user:
             await interaction.response.send_message("Select a user first.", ephemeral=True)
             return
         await interaction.response.send_modal(UpdateBalanceModal(self.selected_user))
 
-    @discord.ui.button(label="Ban User", style=discord.ButtonStyle.danger)
+    @discord.ui.button(label="Ban User", style=discord.ButtonStyle.danger, custom_id="admin_ban_user")
     async def ban_user(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not self.selected_user:
             await interaction.response.send_message("Select a user first.", ephemeral=True)
@@ -170,7 +170,7 @@ class AdminView(discord.ui.View):
             f"User <@{self.selected_user}> banned for game `{game}` for {duration} seconds.", ephemeral=True
         )
 
-    @discord.ui.button(label="Unban User", style=discord.ButtonStyle.success)
+    @discord.ui.button(label="Unban User", style=discord.ButtonStyle.success, custom_id="admin_unban_user")
     async def unban_user(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not self.selected_user:
             await interaction.response.send_message("Select a user first.", ephemeral=True)
