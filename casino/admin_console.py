@@ -5,14 +5,12 @@ from database import get_users_info, get_balance, update_balance, get_user_ban_s
 # --- User Select Dropdown ---
 class UserDatabaseSelect(discord.ui.Select):
     def __init__(self, users: list[dict]):
-        # Always add "All Users" at the top
         options = [discord.SelectOption(label="All Users", value="all")]
 
-        # Add each user as a selectable option (max 24 to respect Discord's 25 option limit)
-        options += [
-            discord.SelectOption(label=u['username'], value=str(u['user_id']))
-            for u in users[:24]
-        ]
+        for u in users[:24]:
+            username = u.get('username') or "Unknown"        # replace empty username
+            username = username[:100]                        # truncate if >100 chars
+            options.append(discord.SelectOption(label=username, value=str(u['user_id'])))
 
         super().__init__(
             placeholder="Select a user...",
@@ -34,7 +32,7 @@ class UserDatabaseSelect(discord.ui.Select):
                 msg += f"👤 {u['username']} | 💰 {u['balance']} | 🧮 Total Bet: {u['total_bet']}\n"
                 # Send in chunks if message too long
                 if len(msg) > 1800:
-                    await interaction.response.send_message(msg, ephemeral=True)
+                    await interaction.followup.send(msg, ephemeral=True)
                     msg = ""
             if msg:
                 await interaction.response.send_message(msg, ephemeral=True)
