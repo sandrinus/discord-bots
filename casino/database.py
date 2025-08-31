@@ -118,24 +118,25 @@ async def get_users_info() -> list[dict]:
         ]
 
 # Get balance and total bet for a user
-async def get_balance(user_id: int, username: str = ""):
+async def get_balance(user_id: int, username: str = "", admin=False):
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
             "SELECT balance, total_bet FROM user_accounts WHERE user_id = $1", user_id
         )
         if row:
-            if username:
+            if username and not admin:
                 await conn.execute(
                     "UPDATE user_accounts SET username = $1 WHERE user_id = $2", username, user_id
                 )
             return (row['balance'], row['total_bet'])
         
         # Insert new user with default balance
-        await conn.execute(
-            "INSERT INTO user_accounts (user_id, username, balance, total_bet) VALUES ($1, $2, 30000, 0)",
-            user_id, username
-        )
-        return (30000, 0)
+        if not admin:
+            await conn.execute(
+                "INSERT INTO user_accounts (user_id, username, balance, total_bet) VALUES ($1, $2, 30000, 0)",
+                user_id, username
+            )
+            return (30000, 0)
 
 # Update balance and total bet
 async def update_balance(user_id: int, win_amount: int, bet_amount: int):
