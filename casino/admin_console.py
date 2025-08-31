@@ -130,10 +130,10 @@ class UpdateBalanceModal(discord.ui.Modal, title="Update User Balance"):
 
 # --- Admin View ---
 class AdminView(discord.ui.View):
-    def __init__(self, users: list[dict], games: list[str]):
+    def __init__(self, users: list[dict] = None, games: list[str] = None):
         super().__init__(timeout=None)
-        self.users = users
-        self.games = games
+        self.users = users if users is not None else []
+        self.games = games if games is not None else []
         self.selected_user = None
         self.selected_game = None
         self.ban_duration = None
