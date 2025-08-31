@@ -3,7 +3,7 @@ import random
 import asyncio
 from database import get_pool, get_balance, update_balance, get_user_lock
 
-wheel_of_fortune = [100, '🔄️', -10, 15, -20, '🔄️', -100, '🔄️', 10, -15, 20, '🔄️']
+wheel_of_fortune = [100, '🔄️', -10, 15, -20, '🔄️', -50, '🔄️', 10, -15, 20, '🔄️']
 active_wheel_spins = set() # set to control active spins so users cannot spam
 
 def embed_wheel(i):
@@ -78,7 +78,7 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
 
     for step in range(winner+1):
         pos = (step + wheel_state) % len(wheel_of_fortune)
-        delay = 0.05 + ((step / winner)**3) * 1.3
+        delay = 0.05 + ((step / winner)**3)
         await asyncio.sleep(delay)
         try:
             await interaction.edit_original_response(embed=embed_wheel(pos), view=view)
