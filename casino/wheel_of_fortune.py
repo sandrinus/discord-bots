@@ -98,9 +98,9 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
             win_amount_delta = round_up_to_50(bal * result // 100)
             if (win_amount_delta <= 0):
                 bet_amount_delta = abs(win_amount_delta)
-                msg_text = f"You lost {result}% of your current balane🥲: {win_amount_delta}."
+                msg_text = f"You lost {result}% of your current balance🥲: {win_amount_delta}."
             else:
-                msg_text = f"You won {result}% of your current balane🤑: {win_amount_delta}."
+                msg_text = f"You won {result}% of your current balance🤑: {win_amount_delta}."
 
         await update_balance(uid, win_amount_delta, bet_amount_delta)
 
