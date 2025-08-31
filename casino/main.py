@@ -163,7 +163,7 @@ async def on_ready():
     if persistent_home_view is None:  # Prevent re-creating on reconnects
         persistent_home_view = CasinoHomeView()
     if persistent_admin_view is None:
-        persistent_admin_view = AdminView()
+        persistent_admin_view = AdminView(games=["Slots", "Blackjack", "Fortune Wheel"])
     bot.add_view(persistent_home_view)
     bot.add_view(persistent_admin_view)
     
