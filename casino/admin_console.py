@@ -4,21 +4,26 @@ from database import get_users_info, get_balance, update_balance, get_user_ban_s
 
 # --- User Select Dropdown ---
 class UserDatabaseSelect(discord.ui.Select):
-    def __init__(self, users):
-        # Add "All Users" option at the top
+    def __init__(self, users: list[dict]):
+        # Always add "All Users" at the top
         options = [discord.SelectOption(label="All Users", value="all")]
 
-        # Add up to 24 individual users (Discord allows max 25 options per dropdown)
+        # Add each user as a selectable option (max 24 to respect Discord's 25 option limit)
         options += [
             discord.SelectOption(label=u['username'], value=str(u['user_id']))
             for u in users[:24]
         ]
 
-        super().__init__(placeholder="Select a user...", min_values=1, max_values=1, options=options, custom_id="admin_user_select")
+        super().__init__(
+            placeholder="Select a user...",
+            min_values=1,
+            max_values=1,
+            options=options,
+            custom_id="admin_user_select"
+        )
 
     async def callback(self, interaction: discord.Interaction):
         if self.values[0] == "all":
-            # Show all users
             users = await get_users_info()
             if not users:
                 await interaction.response.send_message("No users found.", ephemeral=True)
@@ -27,15 +32,15 @@ class UserDatabaseSelect(discord.ui.Select):
             msg = ""
             for u in users:
                 msg += f"👤 {u['username']} | 💰 {u['balance']} | 🧮 Total Bet: {u['total_bet']}\n"
-                if len(msg) > 1800:  # send in chunks to avoid Discord message limit
-                    await interaction.user.send(msg)
+                # Send in chunks if message too long
+                if len(msg) > 1800:
+                    await interaction.response.send_message(msg, ephemeral=True)
                     msg = ""
             if msg:
-                await interaction.user.send(msg)
+                await interaction.response.send_message(msg, ephemeral=True)
 
-            await interaction.response.send_message("User list sent via DM.", ephemeral=True)
         else:
-            # Show a specific user
+            # A specific user was selected
             uid = int(self.values[0])
             self.view.selected_user = uid
 
