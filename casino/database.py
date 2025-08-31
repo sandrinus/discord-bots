@@ -220,18 +220,64 @@ async def get_all_banned_users() -> list[dict]:
             for r in rows
         ]
 
-async def ban_user_management(user_id: int, ban: bool, time: int, game: str):
+async def ban_user_management(user_id: int, ban: bool, ban_time: int, game: str):
     async with pool.acquire() as conn:
-        await conn.execute(
-            """
-            UPDATE banned_users
-            SET ban_status = $1,
-                ban_time = $2,
-                banned_games = array(SELECT DISTINCT unnest(array_append(banned_games, $3)))
-            WHERE user_id = $4
-            """,
-            ban, time, game, user_id
-        )
+        if ban:  # Apply a ban
+            if game == "{}":  # ban ALL games
+                await conn.execute(
+                    """
+                    UPDATE banned_users
+                    SET ban_status = TRUE,
+                        ban_time = $1,
+                        banned_games = '{}'
+                    WHERE user_id = $2
+                    """,
+                    ban_time, user_id
+                )
+            else:  # ban specific game
+                await conn.execute(
+                    """
+                    UPDATE banned_users
+                    SET ban_status = TRUE,
+                        ban_time = $1,
+                        banned_games = (
+                            SELECT array(SELECT DISTINCT unnest(banned_users.banned_games || $2::text))
+                        )
+                    WHERE user_id = $3
+                    """,
+                    ban_time, game, user_id
+                )
+        else:  # Remove a ban
+            if game == "{}":  # unban ALL games
+                await conn.execute(
+                    """
+                    UPDATE banned_users
+                    SET ban_status = FALSE,
+                        ban_time = 0,
+                        banned_games = '{}'
+                    WHERE user_id = $1
+                    """,
+                    user_id
+                )
+            else:  # unban specific game
+                await conn.execute(
+                    """
+                    UPDATE banned_users
+                    SET banned_games = array_remove(banned_games, $1)
+                    WHERE user_id = $2
+                    """,
+                    game, user_id
+                )
+                # Check if array is empty → then mark ban_status as False
+                await conn.execute(
+                    """
+                    UPDATE banned_users
+                    SET ban_status = CASE WHEN array_length(banned_games, 1) IS NULL THEN FALSE ELSE TRUE END,
+                        ban_time = CASE WHEN array_length(banned_games, 1) IS NULL THEN 0 ELSE ban_time END
+                    WHERE user_id = $1
+                    """,
+                    user_id
+                )
 
 # User concurrency control (same logic as before)
 user_locks = {}
