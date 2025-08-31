@@ -140,14 +140,16 @@ class AdminView(discord.ui.View):
 
     @discord.ui.button(label="Select User", style=discord.ButtonStyle.primary, custom_id="admin_select_user")
     async def show_user_dropdown(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # Create a new view with the dropdowns only
-        view = discord.ui.View()
+        # Ensure there is at least one "fake" user/game if none exist
         users_list = self.users or [{"username": "No Users", "user_id": 0}]
-        view.add_item(UserDatabaseSelect(self.users))  # the dropdown
-        view.add_item(BanTimeSelect())
         games_list = self.games or ["No Games"]
-        view.add_item(GameSelect(self.games))
-
+    
+        # Create a new view with the dropdowns
+        view = discord.ui.View()
+        view.add_item(UserDatabaseSelect(users_list))  # pass guaranteed non-empty list
+        view.add_item(BanTimeSelect())
+        view.add_item(GameSelect(games_list))  # pass guaranteed non-empty list
+    
         await interaction.response.send_message(
             "Choose a user and configure ban/balance:", view=view, ephemeral=True
         )
