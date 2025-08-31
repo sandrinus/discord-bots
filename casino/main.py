@@ -85,13 +85,13 @@ class CasinoHomeView(discord.ui.View):
             ephemeral=True
         )
 
-    @discord.ui.button(label="🔫 Cash or Crash", style=discord.ButtonStyle.success, custom_id="goto_revolver")
-    async def goto_revolver(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(
-            "🔫 **Cash or Crash**\nPress fire to decide your fate!",
-            view=RevolverView(interaction.user.id),
-            ephemeral=True
-        )
+    # @discord.ui.button(label="🔫 Cash or Crash", style=discord.ButtonStyle.success, custom_id="goto_revolver")
+    # async def goto_revolver(self, interaction: discord.Interaction, button: discord.ui.Button):
+    #     await interaction.response.send_message(
+    #         "🔫 **Cash or Crash**\nPress fire to decide your fate!",
+    #         view=RevolverView(interaction.user.id),
+    #         ephemeral=True
+    #     )
     
     @discord.ui.button(label="📆 Claim Daily (3000)", style=discord.ButtonStyle.secondary, custom_id="daily_reward", row=1)
     async def daily_reward(self, interaction: discord.Interaction, button: discord.ui.Button):
