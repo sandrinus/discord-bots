@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import time
 import json
+import datetime
 
 from database import (
     get_users_info, get_balance, update_balance,
@@ -376,7 +377,19 @@ class AdminView(discord.ui.View):
             return
         msg = ""
         for u in banned_users:
-            msg += f"👤 {u.get('username','Unknown')[:100]} | ⛔ Banned Games: {', '.join(u['banned_games']) if u['banned_games'] else 'ALL'} | 🕒 Ban Time: {u['ban_time']}\n"
+            # Convert timestamp if not permanent
+            if u['ban_time'] == -1:
+                ban_time_str = "Permanent"
+            elif u['ban_time'] == 0:
+                ban_time_str = "Not Banned"
+            else:
+                ban_time_str = datetime.datetime.utcfromtimestamp(u['ban_time']).strftime("%Y-%m-%d %H:%M:%S UTC")
+    
+            msg += (
+                f"👤 {u.get('username','Unknown')[:100]} | "
+                f"⛔ Banned Games: {', '.join(u['banned_games']) if u['banned_games'] else 'ALL'} | "
+                f"🕒 Ban Time: {ban_time_str}\n"
+            )
             if len(msg) > 1800:
                 await interaction.followup.send(msg, ephemeral=True)
                 msg = ""
