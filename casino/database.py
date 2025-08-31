@@ -197,6 +197,27 @@ async def get_user_ban_status(user_id: int= None):
             "ban_time": row["ban_time"],
             "banned_games": row["banned_games"] or []
         }
+    
+async def get_all_banned_users() -> list[dict]:
+    """
+    Retrieve all users with ban_status = TRUE from banned_users table.
+    """
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT user_id, username, ban_time, banned_games
+            FROM banned_users
+            WHERE ban_status = TRUE
+            ORDER BY username
+        """)
+        return [
+            {
+                "user_id": r["user_id"],
+                "username": r["username"],
+                "ban_time": r["ban_time"],
+                "banned_games": r["banned_games"] or []
+            }
+            for r in rows
+        ]
 
 async def ban_user_management(user_id: int, ban: bool, time: int, game: str):
     async with pool.acquire() as conn:
