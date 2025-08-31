@@ -39,7 +39,7 @@ class UserDatabaseSelect(discord.ui.Select):
             uid = int(self.values[0])
             self.view.selected_user = uid
             username = next((u.get('username','Unknown')[:100] for u in self.users if u['user_id'] == uid), "Unknown")
-            balance, total_bet = await get_balance(uid)
+            balance, total_bet = await get_balance(user_id=uid, admin=True)
             ban_info = await get_user_ban_status(uid)
             msg = (
                 f"👤 **{username}**\n"
