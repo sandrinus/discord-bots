@@ -10,8 +10,7 @@ class UserDatabaseSelect(discord.ui.Select):
     def __init__(self, users: list[dict]):
         options = [discord.SelectOption(label="All Users", value="all")]
         for u in users[:24]:
-            username = u.get('username') or "Unknown"
-            username = username[:100]
+            username = u.get('username')[:100] if u.get('username') else f"User {u['user_id']}"
             options.append(discord.SelectOption(label=username, value=str(u['user_id'])))
         super().__init__(
             placeholder="Select a user...",
@@ -30,7 +29,7 @@ class UserDatabaseSelect(discord.ui.Select):
                 return
             msg = ""
             for u in users:
-                msg += f"👤 {u['username'][:100]} | 💰 {u['balance']} | 🧮 Total Bet: {u['total_bet']}\n"
+                msg += f"👤 {u.get('username','Unknown')[:100]} | 💰 {u['balance']} | 🧮 Total Bet: {u['total_bet']}\n"
                 if len(msg) > 1800:
                     await interaction.followup.send(msg, ephemeral=True)
                     msg = ""
@@ -39,7 +38,7 @@ class UserDatabaseSelect(discord.ui.Select):
         else:
             uid = int(self.values[0])
             self.view.selected_user = uid
-            username = next((u['username'][:100] for u in self.users if u['user_id'] == uid), "Unknown")
+            username = next((u.get('username','Unknown')[:100] for u in self.users if u['user_id'] == uid), "Unknown")
             balance, total_bet = await get_balance(uid)
             ban_info = await get_user_ban_status(uid)
             msg = (
@@ -51,6 +50,7 @@ class UserDatabaseSelect(discord.ui.Select):
                 f"🎮 Banned Games: {', '.join(ban_info['banned_games']) if ban_info['banned_games'] else 'None'}"
             )
             await interaction.response.send_message(msg, ephemeral=True)
+
 
 # --- Ban Duration Dropdown ---
 class BanTimeSelect(discord.ui.Select):
@@ -72,6 +72,7 @@ class BanTimeSelect(discord.ui.Select):
             self.view.ban_duration = int(self.values[0])
             await interaction.response.send_message(f"Ban duration set to {self.values[0]} seconds.", ephemeral=True)
 
+
 # --- Custom Ban Modal ---
 class CustomBanTimeModal(discord.ui.Modal, title="Enter Custom Ban Time"):
     def __init__(self, view):
@@ -92,6 +93,7 @@ class CustomBanTimeModal(discord.ui.Modal, title="Enter Custom Ban Time"):
         self.view.ban_duration = custom_time
         await interaction.response.send_message(f"Custom ban duration set to {custom_time} seconds.", ephemeral=True)
 
+
 # --- Game Selection Dropdown ---
 class GameSelect(discord.ui.Select):
     def __init__(self, games: list[str]):
@@ -102,12 +104,13 @@ class GameSelect(discord.ui.Select):
         self.view.selected_game = self.values[0]
         await interaction.response.send_message(f"Selected game: {self.values[0]}", ephemeral=True)
 
+
 # --- Unban Dropdown ---
 class UnbanUserSelect(discord.ui.Select):
     def __init__(self, banned_users: list[dict]):
         options = [
             discord.SelectOption(
-                label=(u['username'][:100] if u['username'] else f"User {u['user_id']}"),
+                label=(u.get('username','User '+str(u['user_id']))[:100]),
                 value=str(u['user_id'])
             ) for u in banned_users
         ]
@@ -125,15 +128,20 @@ class UnbanUserSelect(discord.ui.Select):
         await ban_user_management(uid, False, 0, "{}")
         await interaction.response.send_message(f"✅ User <@{uid}> has been unbanned.", ephemeral=True)
 
+
 # --- Manage Balance Flow ---
 class BalanceUserSelect(discord.ui.Select):
     def __init__(self, users: list[dict]):
-        options = [discord.SelectOption(label=u['username'][:100], value=str(u['user_id'])) for u in users]
+        options = [
+            discord.SelectOption(label=(u.get('username','User '+str(u['user_id']))[:100]), value=str(u['user_id']))
+            for u in users[:25]
+        ]
         super().__init__(placeholder="Select user...", min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
         self.view.selected_user = int(self.values[0])
         await interaction.response.send_message("Select type to adjust:", view=BalanceTypeView(), ephemeral=True)
+
 
 class BalanceTypeSelect(discord.ui.Select):
     def __init__(self):
@@ -147,6 +155,7 @@ class BalanceTypeSelect(discord.ui.Select):
         self.view.adjust_type = self.values[0]
         await interaction.response.send_message("Select operation:", view=BalanceOperationView(), ephemeral=True)
 
+
 class BalanceOperationSelect(discord.ui.Select):
     def __init__(self):
         options = [
@@ -158,6 +167,7 @@ class BalanceOperationSelect(discord.ui.Select):
     async def callback(self, interaction: discord.Interaction):
         self.view.operation = self.values[0]
         await interaction.response.send_modal(BalanceAmountModal(self.view.selected_user, self.view.adjust_type, self.view.operation))
+
 
 class BalanceAmountModal(discord.ui.Modal, title="Enter Amount"):
     def __init__(self, user_id, adjust_type, operation):
@@ -183,6 +193,7 @@ class BalanceAmountModal(discord.ui.Modal, title="Enter Amount"):
             f"✅ Updated <@{self.user_id}>: {self.adjust_type} {'added' if amount>0 else 'removed'} {abs(amount)}", ephemeral=True
         )
 
+
 class BalanceTypeView(discord.ui.View):
     def __init__(self):
         super().__init__()
@@ -191,6 +202,7 @@ class BalanceTypeView(discord.ui.View):
         self.operation = None
         self.add_item(BalanceTypeSelect())
 
+
 class BalanceOperationView(discord.ui.View):
     def __init__(self):
         super().__init__()
@@ -198,6 +210,7 @@ class BalanceOperationView(discord.ui.View):
         self.adjust_type = None
         self.operation = None
         self.add_item(BalanceOperationSelect())
+
 
 # --- Admin View ---
 class AdminView(discord.ui.View):
@@ -233,7 +246,7 @@ class AdminView(discord.ui.View):
             return
         msg = ""
         for u in banned_users:
-            msg += f"👤 {u['username'][:100]} | ⛔ Banned Games: {', '.join(u['banned_games']) if u['banned_games'] else 'ALL'} | 🕒 Ban Time: {u['ban_time']}\n"
+            msg += f"👤 {u.get('username','Unknown')[:100]} | ⛔ Banned Games: {', '.join(u['banned_games']) if u['banned_games'] else 'ALL'} | 🕒 Ban Time: {u['ban_time']}\n"
             if len(msg) > 1800:
                 await interaction.followup.send(msg, ephemeral=True)
                 msg = ""
