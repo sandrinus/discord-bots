@@ -175,7 +175,7 @@ class BalanceAmountModal(discord.ui.Modal, title="Enter Amount"):
         self.user_id = user_id
         self.adjust_type = adjust_type
         self.operation = operation
-        self.add_item(discord.ui.InputText(label="Amount", placeholder="Enter integer"))
+        self.add_item(discord.ui.TextInput(label="Amount", placeholder="Enter integer"))
 
     async def on_submit(self, interaction: discord.Interaction):
         try:
