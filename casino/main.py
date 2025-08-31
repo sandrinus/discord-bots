@@ -4,9 +4,11 @@ import time
 import os
 from datetime import datetime
 from database import init_pool, get_pool, init_db, get_balance, update_balance, get_user_lock
+from admin_console import AdminView
 from slots import SlotView
 from blackjack import BlackjackBetView
 from wheel_of_fortune import FortuneView, embed_wheel, get_wheel_state
+from cash_or_crash import RevolverView
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix=None, intents=intents)
@@ -149,17 +151,22 @@ class CasinoHomeView(discord.ui.View):
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
 persistent_home_view = None
+persistent_admin_view = None
 
 @bot.event
 async def on_ready():
     global persistent_home_view
+    global persistent_admin_view
 
     # Initialize the asyncpg connection pool once
     await init_pool()
 
     if persistent_home_view is None:  # Prevent re-creating on reconnects
         persistent_home_view = CasinoHomeView()
+    if persistent_admin_view is None:
+        persistent_admin_view = AdminView()
     bot.add_view(persistent_home_view)
+    bot.add_view(persistent_admin_view)
     
     # Initialize the database schema after pool is ready
     await init_db()  
@@ -173,6 +180,15 @@ async def casino(interaction: discord.Interaction):
     await interaction.response.send_message(
         embed=discord.Embed(title="🎮 Casino Home", description="Click buttons below to play!"),
         view=persistent_home_view,
+        ephemeral=False
+    )
+
+# Slash command to show the casino home screen message publicly
+@bot.tree.command(name="admin", description="Open the Admin Console")
+async def admin(interaction: discord.Interaction):
+    await interaction.response.send_message(
+        embed=discord.Embed(title="👮🏼 Admin Console", description="Click buttons below to play!"),
+        view=persistent_admin_view,
         ephemeral=False
     )
 
