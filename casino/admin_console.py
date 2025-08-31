@@ -142,8 +142,10 @@ class AdminView(discord.ui.View):
     async def show_user_dropdown(self, interaction: discord.Interaction, button: discord.ui.Button):
         # Create a new view with the dropdowns only
         view = discord.ui.View()
+        users_list = self.users or [{"username": "No Users", "user_id": 0}]
         view.add_item(UserDatabaseSelect(self.users))  # the dropdown
         view.add_item(BanTimeSelect())
+        games_list = self.games or ["No Games"]
         view.add_item(GameSelect(self.games))
 
         await interaction.response.send_message(
