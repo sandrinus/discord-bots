@@ -31,7 +31,7 @@ async def init_db():
                 user_id BIGINT PRIMARY KEY,
                 username TEXT DEFAULT '',
                 balance INTEGER DEFAULT 30000 CHECK (balance >= 0),
-                total_bet INTEGER DEFAULT 0,
+                total_bet BIGINT DEFAULT 0,
                 last_daily_claim BIGINT DEFAULT 0,
                 wheel_state SMALLINT DEFAULT 0
             )
