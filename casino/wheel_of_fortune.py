@@ -3,7 +3,7 @@ import random
 import asyncio
 from database import get_pool, get_balance, update_balance, get_user_lock
 
-wheel_of_fortune = [100, '🔄️', -10, 15, -20, '🔄️', -50, '🔄️', 10, -15, 20, '🔄️']
+wheel_of_fortune = [100, '@', -10, 15, -20, '@', -50, '@', 10, -15, 20, '@']
 active_wheel_spins = set() # set to control active spins so users cannot spam
 
 def embed_wheel(i):
@@ -92,7 +92,7 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
         win_amount_delta = 0
         bet_amount_delta = 0
 
-        if result == '🔄️':
+        if result == '@':
             msg_text = f"You hit {result}. Spin again!"
         else:
             win_amount_delta = round_up_to_50(bal * result // 100)
