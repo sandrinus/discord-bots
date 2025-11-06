@@ -1,13 +1,11 @@
 import discord
 from discord.ext import commands
-import time
-import json
-import datetime
+# import time
+# import json
+# import datetime
 
-from database import (
-    get_users_info, get_balance, update_balance,
-    get_all_banned_users, ban_user_management, get_user_ban_status
-)
+from database import get_users_info, get_balance, update_balance
+    # get_all_banned_users, ban_user_management, get_user_ban_status
 
 # --- (keep your original UserDatabaseSelect if you like) ---
 class UserDatabaseSelect(discord.ui.Select):
@@ -44,11 +42,11 @@ class UserDatabaseSelect(discord.ui.Select):
             self.view.selected_user = uid
             username = next((u.get('username','Unknown')[:100] for u in self.users if u['user_id'] == uid), "Unknown")
             balance, total_bet = await get_balance(user_id=uid, admin=True)
-            ban_info = await get_user_ban_status(uid)
+            # ban_info = await get_user_ban_status(uid)
             msg = (
                 f"👤 **{username}**\n"
                 f"💰 Balance: {balance}\n"
-                f"🧮 Total Bet: {total_bet}\n"
+                f"🧮 Total Bet: {total_bet}"
                 # f"⛔ Banned: {ban_info['ban_status']}\n"
                 # f"🕒 Ban Time: {ban_info['ban_time']}\n"
                 # f"🎮 Banned Games: {', '.join(ban_info['banned_games']) if ban_info['banned_games'] else 'None'}"
