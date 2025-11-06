@@ -14,7 +14,7 @@ def embed_wheel(i):
           {fmt('🔻')}
           {fmt('🔻')}
           {fmt(wheel_of_fortune[i%len(wheel_of_fortune)])}
-    {fmt(wheel_of_fortune[(i+1)%len(wheel_of_fortune)])}    |   {fmt(wheel_of_fortune[(i+11)%len(wheel_of_fortune)])}
+      {fmt(wheel_of_fortune[(i+1)%len(wheel_of_fortune)])}  |   {fmt(wheel_of_fortune[(i+11)%len(wheel_of_fortune)])}
 {fmt(wheel_of_fortune[(i+2)%len(wheel_of_fortune)])}    \\   |   /    {fmt(wheel_of_fortune[(i+10)%len(wheel_of_fortune)])}
    \\     \\  |  /     /
     \\     \\ | /     /
@@ -22,7 +22,7 @@ def embed_wheel(i):
     /     / | \\     \\
    /     /  |  \\     \\
 {fmt(wheel_of_fortune[(i+4)%len(wheel_of_fortune)])}    /   |   \\    {fmt(wheel_of_fortune[(i+8)%len(wheel_of_fortune)])}
-    {fmt(wheel_of_fortune[(i+5)%len(wheel_of_fortune)])}    |   {fmt(wheel_of_fortune[(i+7)%len(wheel_of_fortune)])}             
+      {fmt(wheel_of_fortune[(i+5)%len(wheel_of_fortune)])}  |   {fmt(wheel_of_fortune[(i+7)%len(wheel_of_fortune)])}             
           {fmt(wheel_of_fortune[(i+6)%len(wheel_of_fortune)])}"""
     
     embed = discord.Embed(title="Wheel of Fortune 🎯", description=f"```{desc}```", color=0xFFD700)
