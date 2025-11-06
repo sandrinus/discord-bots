@@ -8,7 +8,7 @@ active_wheel_spins = set() # set to control active spins so users cannot spam
 
 def embed_wheel(i):
     def fmt(val):
-        return str(val).center(4) 
+        return str(val).center(3) 
     desc = f"""
           {fmt('🔻')}
           {fmt('🔻')}
