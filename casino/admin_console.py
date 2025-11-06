@@ -49,9 +49,9 @@ class UserDatabaseSelect(discord.ui.Select):
                 f"👤 **{username}**\n"
                 f"💰 Balance: {balance}\n"
                 f"🧮 Total Bet: {total_bet}\n"
-                f"⛔ Banned: {ban_info['ban_status']}\n"
-                f"🕒 Ban Time: {ban_info['ban_time']}\n"
-                f"🎮 Banned Games: {', '.join(ban_info['banned_games']) if ban_info['banned_games'] else 'None'}"
+                # f"⛔ Banned: {ban_info['ban_status']}\n"
+                # f"🕒 Ban Time: {ban_info['ban_time']}\n"
+                # f"🎮 Banned Games: {', '.join(ban_info['banned_games']) if ban_info['banned_games'] else 'None'}"
             )
             await interaction.response.send_message(msg, ephemeral=True)
 
