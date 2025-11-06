@@ -16,11 +16,11 @@ def embed_wheel(i):
           {fmt(wheel_of_fortune[i%len(wheel_of_fortune)])}
       {fmt(wheel_of_fortune[(i+1)%len(wheel_of_fortune)])}  |   {fmt(wheel_of_fortune[(i+11)%len(wheel_of_fortune)])}
 {fmt(wheel_of_fortune[(i+2)%len(wheel_of_fortune)])}    \\   |   /    {fmt(wheel_of_fortune[(i+10)%len(wheel_of_fortune)])}
-   \\     \\  |  /     /
-    \\     \\ | /     /
+   \\    \\  |  /     /
+    \\    \\ | /     /
 {fmt(wheel_of_fortune[(i+3)%len(wheel_of_fortune)])} ------[●]------ {fmt(wheel_of_fortune[(i+9)%len(wheel_of_fortune)])}
-    /     / | \\     \\
-   /     /  |  \\     \\
+    /    / | \\     \\
+   /    /  |  \\     \\
 {fmt(wheel_of_fortune[(i+4)%len(wheel_of_fortune)])}    /   |   \\    {fmt(wheel_of_fortune[(i+8)%len(wheel_of_fortune)])}
       {fmt(wheel_of_fortune[(i+5)%len(wheel_of_fortune)])}  |   {fmt(wheel_of_fortune[(i+7)%len(wheel_of_fortune)])}             
           {fmt(wheel_of_fortune[(i+6)%len(wheel_of_fortune)])}"""
