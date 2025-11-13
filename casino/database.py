@@ -5,7 +5,7 @@ import os
 
 DB_DSN = (
     f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWD')}"
-    f"@postgres:5432/casino"
+    f"@postgres-casino:5432/casino"
 )
 
 # Connection pool - create once, reuse connections
