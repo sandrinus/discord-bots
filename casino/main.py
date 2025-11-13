@@ -154,23 +154,29 @@ persistent_admin_view = None
 
 @bot.event
 async def on_ready():
+    print("🟡 on_ready started", flush=True)
+
+    await init_pool()
+    print("🟢 Pool initialized", flush=True)
+
     global persistent_home_view
     global persistent_admin_view
 
-    # Initialize the asyncpg connection pool once
-    await init_pool()
-
-    if persistent_home_view is None:  # Prevent re-creating on reconnects
+    if persistent_home_view is None:
         persistent_home_view = CasinoHomeView()
+        print("🟢 Home view created", flush=True)
     if persistent_admin_view is None:
         persistent_admin_view = AdminView(games=["Slots", "Blackjack", "Fortune Wheel"])
+        print("🟢 Admin view created", flush=True)
+
     bot.add_view(persistent_home_view)
     bot.add_view(persistent_admin_view)
-    
-    # Initialize the database schema after pool is ready
-    await init_db()  
+    print("🟢 Views added", flush=True)
 
-    await bot.tree.sync()  # Sync slash commands
+    await init_db()
+    print("🟢 DB initialized", flush=True)
+
+    await bot.tree.sync()
     print(f"✅ {bot.user} is ready!", flush=True)
 
 # Slash command to show the casino home screen message publicly
