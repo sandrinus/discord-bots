@@ -120,7 +120,11 @@ class BlackjackView(discord.ui.View):
                 dealer_total = hand_value(self.dealer_hand)
     
                 if dealer_total < player_total and dealer_total < 21:
-                    self.dealer_hand.append(draw_card())
+                    while True:
+                        card = draw_card
+                        if card not in self.dealer_hand:
+                            self.dealer_hand.append(card)
+                            break
                     await self.update_embed(interaction=interaction, reveal_dealer=True)
                     await asyncio.sleep(1)
                 else:
@@ -147,8 +151,11 @@ class BlackjackView(discord.ui.View):
         # Prevent spam clicks
         button.disabled = True
         await self.message.edit(view=self)
-
-        self.player_hand.append(draw_card()) 
+        while True:
+            card = draw_card()
+            if card not in self.player_hand:
+                self.player_hand.append(card) 
+                break
         player_total = hand_value(self.player_hand)
 
         if player_total > 21:
