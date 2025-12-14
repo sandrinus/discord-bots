@@ -130,6 +130,7 @@ class BalanceAmountModal(discord.ui.Modal, title="Enter Amount"):
         else:
             await update_balance(self.user_id, 0, amount)
         # Log the admin action
+        bal, bet = await get_balance(user_id=self.user_id, admin=True)
         await db_log(
             user_id=self.user_id,
             username="NULL",
@@ -137,8 +138,8 @@ class BalanceAmountModal(discord.ui.Modal, title="Enter Amount"):
             action=self.operation,
             bet_amount=0,
             delta=amount,
-            balance_after=await get_balance(user_id=self.user_id, admin=True)[0],
-            total_bet_after=await get_balance(user_id=self.user_id, admin=True)[1],
+            balance_after=bal,
+            total_bet_after=bet,
             metadata={
                 "admin_id": interaction.user.id,
                 "admin_name": interaction.user.name,
