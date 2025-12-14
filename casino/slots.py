@@ -2,6 +2,7 @@ import discord
 import random
 import asyncio
 from database import get_balance, update_balance_atomic, can_act
+from my_logginng import db_log
 
 SLOT_SYMBOLS = (
     ["🍒"] * 39 + ["🍋"] * 28 + ["🍉"] * 15 +
@@ -59,8 +60,21 @@ async def slot_machine_run(msg, bet, uid, username):
                 embed.add_field(name="😢 Loss", value=f"You lost {bet} coins.")
 
     # Fetch updated balance to show in footer
-    bal, _ = await get_balance(uid, username)
+    bal, total_bet = await get_balance(uid, username)
     embed.set_footer(text=f"Balance: {bal}")
+    # log the final result
+    await db_log(
+        user_id=uid,
+        username=username,
+        source="slots",
+        action="spin",
+        bet_amount=bet,
+        delta=net_change,
+        balance_after=bal,
+        total_bet_after=total_bet,
+        metadata={"result": result, "symbols": reels, "multiplier": SYMBOL_COEFFICIENTS.get(reels[0], 1)}
+    )
+
     await msg.edit(embed=embed)
 
 # SlotView UI class with buttons
