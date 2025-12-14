@@ -25,6 +25,23 @@ def get_pool():
 
 async def init_db():
     async with pool.acquire() as conn:
+        # Create log table if not exists
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS logs (
+                id BIGSERIAL PRIMARY KEY,
+                user_id BIGINT NOT NULL,
+                username TEXT DEFAULT '',
+                source TEXT DEFAULT '',
+                action TEXT NOT NULL,              
+                bet_amount INTEGER DEFAULT 0,
+                delta INTEGER NOT NULL,             
+                balance_after INTEGER NOT NULL,
+                total_bet_after INTEGER DEFAULT 0,
+                metadata JSONB DEFAULT '{}',
+                created_at TIMESTAMP DEFAULT now()
+            );
+        """)
+
         # Create table if not exists
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS user_accounts (

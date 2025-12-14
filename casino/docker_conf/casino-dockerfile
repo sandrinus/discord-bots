@@ -12,5 +12,6 @@ COPY database.py .
 COPY blackjack.py .
 COPY wheel_of_fortune.py .
 COPY admin_console.py .
+COPY my_logginng.py .
 
 CMD ["python", "main.py"]
