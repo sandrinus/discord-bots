@@ -1,3 +1,4 @@
+from my_logginng import db_log
 import discord
 import random
 import asyncio
@@ -79,6 +80,24 @@ class BlackjackView(discord.ui.View):
             pass
         else:
             await update_balance(self.uid, -self.bet, self.bet)
+
+        # logs
+        bal, total_bet = await get_balance(self.uid, "Unknown")
+        await db_log(
+            user_id=self.uid,
+            username="Unknown",
+            source="blackjack",
+            action="game_end",
+            bet_amount=self.bet,
+            delta=self.bet * (5 if bonus else 1) if win else 0,
+            balance_after=bal,
+            total_bet_after=total_bet,
+            metadata={
+                "player_hand": self.player_hand,
+                "dealer_hand": self.dealer_hand,
+                "result": "win" if win else "draw" if draw else "lose"
+            }
+        )
 
         embed = discord.Embed(
             title="🃏 Blackjack",

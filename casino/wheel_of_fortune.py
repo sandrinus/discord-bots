@@ -2,6 +2,7 @@ import discord
 import random
 import asyncio
 from database import get_pool, get_balance, update_balance, get_user_lock
+from my_logginng import db_log
 
 wheel_of_fortune = [100, '@', -10, 15, -20, '@', -50, '@', 10, -15, 20, '@']
 active_wheel_spins = set() # set to control active spins so users cannot spam
@@ -103,6 +104,19 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
                 msg_text = f"You won {result}% of your current balance🤑: {win_amount_delta}."
 
         await update_balance(uid, win_amount_delta, bet_amount_delta)
+        # logs
+        bal, total_bet = await get_balance(uid, interaction.user.name)
+        await db_log(
+            user_id=uid,
+            username=interaction.user.name,
+            source="wheel_of_fortune",
+            action="fortune_wheel_spin",
+            bet_amount=0,
+            delta=win_amount_delta,
+            balance_after=bal,
+            total_bet_after=total_bet,
+            metadata={"result": result, "final_index": final_index}
+        )
 
     final_embed = embed_wheel(final_index)
     final_embed.add_field(name="Result", value=msg_text, inline=False)
