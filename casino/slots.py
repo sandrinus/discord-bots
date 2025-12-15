@@ -16,6 +16,7 @@ SYMBOL_COEFFICIENTS = {
 async def slot_machine_run(msg, bet, uid, username):
     reels = ["❓"] * 3
     embed = discord.Embed(title="🎰 Rolling...", description=" | ".join(reels), color=discord.Color.gold())
+    bonus = 1
     await msg.edit(embed=embed)
 
     for i in range(3):
@@ -32,7 +33,6 @@ async def slot_machine_run(msg, bet, uid, username):
     else:
         if result:
             m = SYMBOL_COEFFICIENTS[reels[0]]
-            bonus = 1
             if bet == 1000:
                 bonus = 4
             elif bet == 500:
@@ -72,7 +72,7 @@ async def slot_machine_run(msg, bet, uid, username):
         delta=net_change,
         balance_after=bal,
         total_bet_after=total_bet,
-        metadata={"result": result, "symbols": reels, "multiplier": SYMBOL_COEFFICIENTS.get(reels[0], 1)}
+        metadata={"result": result, "symbols": reels, "multiplier": SYMBOL_COEFFICIENTS.get(reels[0], 1) if result else 0, "bonus": bonus}
     )
 
     await msg.edit(embed=embed)
