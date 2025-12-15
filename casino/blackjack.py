@@ -89,7 +89,7 @@ class BlackjackView(discord.ui.View):
             source="blackjack",
             action="game_end",
             bet_amount=self.bet,
-            delta=self.bet * (5 if bonus else 1) if win else 0,
+            delta=self.bet * (5 if bonus else 1) if win else -self.bet,
             balance_after=bal,
             total_bet_after=total_bet,
             metadata={
