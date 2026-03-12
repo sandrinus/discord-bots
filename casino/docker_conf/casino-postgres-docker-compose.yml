@@ -22,7 +22,9 @@ services:
       CASINO_TOKEN: ${CASINO_TOKEN}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWD: ${POSTGRES_PASSWD}
+      DISCORD_WEBHOOK_ALERT: ${DISCORD_WEBHOOK_ALERT}
+      MY_DISCORD_UID: ${MY_DISCORD_UID}
 
 volumes:
   casino_pgdata:
-    external: true
+
