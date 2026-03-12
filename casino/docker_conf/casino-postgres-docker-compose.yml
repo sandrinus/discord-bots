@@ -1,15 +1,4 @@
-services:
-  casino-bot:
-    build:
-      context: .
-      dockerfile: docker_conf/casino-dockerfile
-    container_name: casino-bot
-    restart: unless-stopped
-    environment:
-      CASINO_TOKEN: ${CASINO_TOKEN}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWD: ${POSTGRES_PASSWD}
-
+services:  
   postgres:
     image: postgres:18
     container_name: postgres-casino
@@ -19,7 +8,21 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWD}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - casino_pgdata:/var/lib/postgresql/data
+
+  casino-bot:
+    build:
+      context: .
+      dockerfile: docker_conf/casino-dockerfile
+    container_name: casino-bot
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      CASINO_TOKEN: ${CASINO_TOKEN}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWD: ${POSTGRES_PASSWD}
 
 volumes:
-  pgdata:
+  casino_pgdata:
+    external: true
