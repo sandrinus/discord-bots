@@ -53,12 +53,16 @@ jobs:
         CASINO_TOKEN: ${{ secrets.CASINO_TOKEN }}
         POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
         POSTGRES_PASSWD: ${{ secrets.POSTGRES_PASSWD }}
+        DISCORD_WEBHOOK_ALERT: ${{ secrets.DISCORD_WEBHOOK_ALERT }}
+        MY_DISCORD_UID: ${{ secrets.MY_DISCORD_UID }}
       run: |
         ssh $SSH_USER@$SSH_HOST \
           "cd /home/$SSH_USER/discord-bots/casino && \
            echo 'CASINO_TOKEN=${CASINO_TOKEN}' > .env && \
            echo 'POSTGRES_USER=${POSTGRES_USER}' >> .env && \
-           echo 'POSTGRES_PASSWD=${POSTGRES_PASSWD}' >> .env"
+           echo 'POSTGRES_PASSWD=${POSTGRES_PASSWD}' >> .env && \
+           echo 'DISCORD_WEBHOOK_ALERT=${DISCORD_WEBHOOK_ALERT}' >> .env && \
+           echo 'MY_DISCORD_UID=${MY_DISCORD_UID}' >> .env"
 
     - name: Build & start casino bot
       env:
