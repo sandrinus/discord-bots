@@ -152,32 +152,54 @@ class CasinoHomeView(discord.ui.View):
 persistent_home_view = None
 persistent_admin_view = None
 
+import os, traceback, requests
+
+WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_ALERT")
+PING_UID = os.getenv("MY_DISCORD_UID")
+
+def notify_crash(message: str):
+    if not WEBHOOK_URL:
+        print("DISCORD_WEBHOOK_ALERT not set", flush=True)
+        return
+    payload = {
+        "content": f"<@{PING_UID}> 🚨 **Casino Bot Failed**\n```{message}```"
+    }
+    try:
+        requests.post(WEBHOOK_URL, json=payload, timeout=5)
+    except Exception as e:
+        print(f"Webhook failed: {e}", flush=True)
+
 @bot.event
 async def on_ready():
     print("🟡 on_ready started", flush=True)
+    try:
+        await init_pool()
+        print("🟢 Pool initialized", flush=True)
 
-    await init_pool()
-    print("🟢 Pool initialized", flush=True)
+        global persistent_home_view
+        global persistent_admin_view
 
-    global persistent_home_view
-    global persistent_admin_view
+        if persistent_home_view is None:
+            persistent_home_view = CasinoHomeView()
+            print("🟢 Home view created", flush=True)
+        if persistent_admin_view is None:
+            persistent_admin_view = AdminView(games=["Slots", "Blackjack", "Fortune Wheel"])
+            print("🟢 Admin view created", flush=True)
 
-    if persistent_home_view is None:
-        persistent_home_view = CasinoHomeView()
-        print("🟢 Home view created", flush=True)
-    if persistent_admin_view is None:
-        persistent_admin_view = AdminView(games=["Slots", "Blackjack", "Fortune Wheel"])
-        print("🟢 Admin view created", flush=True)
+        bot.add_view(persistent_home_view)
+        bot.add_view(persistent_admin_view)
+        print("🟢 Views added", flush=True)
 
-    bot.add_view(persistent_home_view)
-    bot.add_view(persistent_admin_view)
-    print("🟢 Views added", flush=True)
+        await init_db()
+        print("🟢 DB initialized", flush=True)
 
-    await init_db()
-    print("🟢 DB initialized", flush=True)
-
-    await bot.tree.sync()
-    print(f"✅ {bot.user} is ready!", flush=True)
+        await bot.tree.sync()
+        print(f"✅ {bot.user} is ready!", flush=True)
+    except Exception:
+        tb = traceback.format_exc()
+        print(tb, flush=True)
+        notify_crash(tb)
+        raise
 
 # Slash command to show the casino home screen message publicly
 @bot.tree.command(name="casino", description="Open the Casino home screen")
@@ -200,32 +222,4 @@ async def admin(interaction: discord.Interaction):
 token = os.getenv("CASINO_TOKEN")
 if not token:
     raise RuntimeError("CASINO_TOKEN is not set in environment variables.")
-
-import os, traceback, requests
-
-WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_ALERT")
-PING_UID = os.getenv("MY_DISCORD_UID")
-
-def notify_crash(message: str):
-    if not WEBHOOK_URL:
-        print("DISCORD_WEBHOOK_ALERT not set", flush=True)
-        return
-    payload = {
-        "content": f"<@{PING_UID}> 🚨 **Casino Bot Failed**\n```{message}```"
-    }
-    try:
-        requests.post(WEBHOOK_URL, json=payload, timeout=5)
-    except Exception as e:
-        print(f"Webhook failed: {e}", flush=True)
-
-token = os.getenv("CASINO_TOKEN")
-if not token:
-    raise RuntimeError("CASINO_TOKEN is not set in environment variables.")
-
-try:
-    bot.run(token)
-except Exception:
-    tb = traceback.format_exc()
-    print(tb, flush=True)
-    notify_crash(tb)
-    raise
+bot.run(token)
