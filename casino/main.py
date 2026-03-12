@@ -3,6 +3,7 @@ from discord.ext import commands
 import time
 import os
 from datetime import datetime
+import traceback, requests
 from database import init_pool, get_pool, init_db, get_balance, update_balance, get_user_lock
 from admin_console import AdminView
 from slots import SlotView
@@ -151,8 +152,6 @@ class CasinoHomeView(discord.ui.View):
 
 persistent_home_view = None
 persistent_admin_view = None
-
-import os, traceback, requests
 
 WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_ALERT")
 PING_UID = os.getenv("MY_DISCORD_UID")

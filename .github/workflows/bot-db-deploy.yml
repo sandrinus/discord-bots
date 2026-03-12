@@ -72,7 +72,7 @@ jobs:
         ssh $SSH_USER@$SSH_HOST \
           "cd /home/$SSH_USER/discord-bots/casino && \
            docker-compose -f docker_conf/casino-postgres-docker-compose.yml \
-           --project-directory . up --build -d"
+           --project-directory . up --build --force-recreate -d"
 
     - name: Verify bot status & send alert if failed
       env:
