@@ -9,11 +9,9 @@ services:
       CASINO_TOKEN: ${CASINO_TOKEN}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWD: ${POSTGRES_PASSWD}
-    networks:
-      - casino-db-net
 
   postgres:
-    image: postgres:latest
+    image: postgres:18
     container_name: postgres-casino
     restart: always
     environment:
@@ -22,12 +20,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWD}
     volumes:
       - pgdata:/var/lib/postgresql/data
-    networks:
-      - casino-db-net
 
 volumes:
   pgdata:
-
-networks:
-  casino-db-net:
-    driver: bridge
