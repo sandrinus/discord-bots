@@ -158,9 +158,13 @@ persistent_admin_view = None
 
 WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_ALERT")
 PING_UID = os.getenv("MY_DISCORD_UID")
-ADMIN_IDS = {
-    int(x.strip()) for x in os.getenv("CASINO_ADMIN_IDS", "").split(",") if x.strip().isdigit()
-}
+
+def _parse_admin_ids() -> set[int]:
+    raw = os.getenv("CASINO_ADMIN_IDS", "")
+    values = [x.strip() for x in raw.split(",") if x.strip()]
+    return {int(x) for x in values if x.isdigit()}
+
+ADMIN_IDS = _parse_admin_ids()
 
 def is_admin_user(interaction: discord.Interaction) -> bool:
     if interaction.user.id in ADMIN_IDS:
