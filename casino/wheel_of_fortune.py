@@ -98,10 +98,10 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
             if result == '@':
                 msg_text = f"You hit {result}. Spin again!"
             else:
-                win_amount_delta = round_up_to_50(int(starting_balance * result / 100))
+                win_amount_delta = round_up_to_50((starting_balance * result) // 100)
                 if win_amount_delta <= 0:
                     bet_amount_delta = abs(win_amount_delta)
-                    msg_text = f"You lost {result}% of your starting balance 🥲: {bet_amount_delta}."
+                    msg_text = f"You lost {abs(result)}% of your starting balance 🥲: {bet_amount_delta}."
                 else:
                     msg_text = f"You won {result}% of your starting balance 🤑: {win_amount_delta}."
 

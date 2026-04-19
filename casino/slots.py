@@ -26,7 +26,7 @@ async def slot_machine_run(msg, bet, uid, username):
 
     result = (reels[0] == reels[1] == reels[2])
     net_change = 0
-    multiplier = 0
+    multiplier = 1
     log_metadata = {"result": result, "symbols": reels}
     bal, _ = await get_balance(uid, username)
     if bet and bal < bet:

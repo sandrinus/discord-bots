@@ -8,10 +8,10 @@ from database import get_users_info, get_balance, update_balance, update_total_b
 from auth_utils import parse_admin_ids, is_admin_user
     # get_all_banned_users, ban_user_management, get_user_ban_status
 
+ADMIN_IDS = parse_admin_ids()
+
 def _is_admin(interaction: discord.Interaction) -> bool:
     return is_admin_user(interaction, ADMIN_IDS)
-
-ADMIN_IDS = parse_admin_ids()
 
 # --- (keep your original UserDatabaseSelect if you like) ---
 class UserDatabaseSelect(discord.ui.Select):
