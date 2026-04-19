@@ -56,72 +56,72 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
         )
         return
     active_wheel_spins.add(uid)
-
     lock = get_user_lock(uid)
+    try:
+        async with lock:
+            bal, _ = await get_balance(uid, interaction.user.name)
+            if bal < bet:
+                if interaction.response.is_done():
+                    await interaction.followup.send(f"❌ Not enough coins! You need at least {bet}.", ephemeral=True)
+                else:
+                    await interaction.response.send_message(f"❌ Not enough coins! You need at least {bet}.", ephemeral=True)
+                return
+            
+            wheel_state = await get_wheel_state(uid)
 
-    async with lock:
-        bal, _ = await get_balance(uid, interaction.user.name)
-        if bal < bet:
-            if interaction.response.is_done():
-                await interaction.followup.send(f"❌ Not enough coins! You need at least {bet}.", ephemeral=True)
+        await interaction.edit_original_response(embed=embed_wheel(wheel_state), view=view)
+
+        full_rotations = random.randint(2, 4)
+        offset = random.randint(0, len(wheel_of_fortune) - 1)
+        winner = full_rotations * len(wheel_of_fortune) + offset
+        final_index = (wheel_state + winner) % len(wheel_of_fortune)
+
+        for step in range(winner+1):
+            pos = (step + wheel_state) % len(wheel_of_fortune)
+            delay = 0.05 + ((step / winner)**3)
+            await asyncio.sleep(delay)
+            try:
+                await interaction.edit_original_response(embed=embed_wheel(pos), view=view)
+            except discord.errors.NotFound:
+                return
+
+        async with lock:
+            await update_wheel_state(uid, final_index)
+            result = wheel_of_fortune[final_index]
+            current_balance, _ = await get_balance(uid, interaction.user.name)
+
+            win_amount_delta = 0
+            bet_amount_delta = 0
+
+            if result == '@':
+                msg_text = f"You hit {result}. Spin again!"
             else:
-                await interaction.response.send_message(f"❌ Not enough coins! You need at least {bet}.", ephemeral=True)
-            return
-        
-        wheel_state = await get_wheel_state(uid)
+                win_amount_delta = round_up_to_50(current_balance * result // 100)
+                if win_amount_delta <= 0:
+                    bet_amount_delta = abs(win_amount_delta)
+                    msg_text = f"You lost {result}% of your current balance🥲: {win_amount_delta}."
+                else:
+                    msg_text = f"You won {result}% of your current balance🤑: {win_amount_delta}."
 
-    await interaction.edit_original_response(embed=embed_wheel(wheel_state), view=view)
+            await update_balance(uid, win_amount_delta, bet_amount_delta)
+            bal, total_bet = await get_balance(uid, interaction.user.name)
+            await db_log(
+                user_id=uid,
+                username=interaction.user.name,
+                source="wheel_of_fortune",
+                action="fortune_wheel_spin",
+                bet_amount=0,
+                delta=win_amount_delta,
+                balance_after=bal,
+                total_bet_after=total_bet,
+                metadata={"result": result, "final_index": final_index}
+            )
 
-    full_rotations = random.randint(2, 4)
-    offset = random.randint(0, len(wheel_of_fortune) - 1)
-    winner = full_rotations * len(wheel_of_fortune) + offset
-    final_index = (wheel_state + winner) % len(wheel_of_fortune)
-
-    for step in range(winner+1):
-        pos = (step + wheel_state) % len(wheel_of_fortune)
-        delay = 0.05 + ((step / winner)**3)
-        await asyncio.sleep(delay)
-        try:
-            await interaction.edit_original_response(embed=embed_wheel(pos), view=view)
-        except discord.errors.NotFound:
-            return
-
-    async with lock:
-        await update_wheel_state(uid, final_index)
-        result = wheel_of_fortune[final_index]
-
-        win_amount_delta = 0
-        bet_amount_delta = 0
-
-        if result == '@':
-            msg_text = f"You hit {result}. Spin again!"
-        else:
-            win_amount_delta = round_up_to_50(bal * result // 100)
-            if (win_amount_delta <= 0):
-                bet_amount_delta = abs(win_amount_delta)
-                msg_text = f"You lost {result}% of your current balance🥲: {win_amount_delta}."
-            else:
-                msg_text = f"You won {result}% of your current balance🤑: {win_amount_delta}."
-
-        await update_balance(uid, win_amount_delta, bet_amount_delta)
-        # logs
-        bal, total_bet = await get_balance(uid, interaction.user.name)
-        await db_log(
-            user_id=uid,
-            username=interaction.user.name,
-            source="wheel_of_fortune",
-            action="fortune_wheel_spin",
-            bet_amount=0,
-            delta=win_amount_delta,
-            balance_after=bal,
-            total_bet_after=total_bet,
-            metadata={"result": result, "final_index": final_index}
-        )
-
-    final_embed = embed_wheel(final_index)
-    final_embed.add_field(name="Result", value=msg_text, inline=False)
-    await interaction.edit_original_response(embed=final_embed, view=view)
-    active_wheel_spins.discard(uid)
+        final_embed = embed_wheel(final_index)
+        final_embed.add_field(name="Result", value=msg_text, inline=False)
+        await interaction.edit_original_response(embed=final_embed, view=view)
+    finally:
+        active_wheel_spins.discard(uid)
 
 
 class FortuneView(discord.ui.View):

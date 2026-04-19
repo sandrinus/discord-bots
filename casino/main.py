@@ -119,25 +119,28 @@ class CasinoHomeView(discord.ui.View):
     @discord.ui.button(label="👑 Leaderboard", style=discord.ButtonStyle.primary, custom_id="top_5", row=1)
     async def leaders(self, interaction: discord.Interaction, button: discord.ui.Button):
         async with get_pool().acquire() as conn:
-            rows = await conn.fetch(
-                "SELECT user_id, username, balance FROM user_accounts ORDER BY balance DESC"
+            top_rows = await conn.fetch(
+                "SELECT user_id, username, balance FROM user_accounts ORDER BY balance DESC LIMIT 5"
+            )
+            user_rank = await conn.fetchval(
+                """
+                SELECT rank FROM (
+                    SELECT user_id, ROW_NUMBER() OVER (ORDER BY balance DESC) AS rank
+                    FROM user_accounts
+                ) ranked
+                WHERE user_id = $1
+                """,
+                interaction.user.id
             )
 
-        if not rows:
+        if not top_rows:
             await interaction.response.send_message("No one gambled yet :(", ephemeral=True)
             return
 
-        leaderboard = [f"**#1 {rows[0]['username']}** - {rows[0]['balance']}$"]
-        leaderboard += [f"**#{i+2}** {row['username']}" for i, row in enumerate(rows[1:5])]
+        leaderboard = [f"**#1 {top_rows[0]['username']}** - {top_rows[0]['balance']}$"]
+        leaderboard += [f"**#{i+2}** {row['username']}" for i, row in enumerate(top_rows[1:])]
 
         leaderboard_text = "\n".join(leaderboard)
-
-        user_id = interaction.user.id
-        user_rank = None
-        for i, row in enumerate(rows):
-            if row["user_id"] == user_id:
-                user_rank = i + 1
-                break
 
         embed = discord.Embed(
             title="🏆 Top 5 Leaders",
@@ -155,6 +158,15 @@ persistent_admin_view = None
 
 WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_ALERT")
 PING_UID = os.getenv("MY_DISCORD_UID")
+ADMIN_IDS = {
+    int(x.strip()) for x in os.getenv("CASINO_ADMIN_IDS", "").split(",") if x.strip().isdigit()
+}
+
+def is_admin_user(interaction: discord.Interaction) -> bool:
+    if interaction.user.id in ADMIN_IDS:
+        return True
+    permissions = getattr(interaction.user, "guild_permissions", None)
+    return bool(permissions and permissions.administrator)
 
 def notify_crash(message: str):
     if not WEBHOOK_URL:
@@ -212,6 +224,9 @@ async def casino(interaction: discord.Interaction):
 # Slash command to show the casino home screen message publicly
 @bot.tree.command(name="admin", description="Open the Admin Console")
 async def admin(interaction: discord.Interaction):
+    if not is_admin_user(interaction):
+        await interaction.response.send_message("❌ You are not allowed to access the admin console.", ephemeral=True)
+        return
     await interaction.response.send_message(
         embed=discord.Embed(title="👮🏼 Admin Console", description="Click buttons below to play!"),
         view=persistent_admin_view,

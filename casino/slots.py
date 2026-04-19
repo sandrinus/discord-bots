@@ -26,10 +26,13 @@ async def slot_machine_run(msg, bet, uid, username):
         await msg.edit(embed=embed)
 
     result = (reels[0] == reels[1] == reels[2])
+    net_change = 0
+    log_metadata = {"result": result, "symbols": reels}
     bal, _ = await get_balance(uid, username)
     if bet and bal < bet:
         embed.color = discord.Color.red()
         embed.add_field(name="❌ Error", value=f"Not enough coins! You have {bal}.")
+        log_metadata["error"] = "insufficient_funds"
     else:
         if result:
             m = SYMBOL_COEFFICIENTS[reels[0]]
@@ -51,6 +54,8 @@ async def slot_machine_run(msg, bet, uid, username):
             # The balance check above might be stale due to concurrent spins
             embed.color = discord.Color.red()
             embed.add_field(name="❌ Error", value="Balance changed during spin, insufficient funds.")
+            net_change = 0
+            log_metadata["error"] = "balance_changed_during_spin"
         else:
             if win > 0 or (result and win==bet==0):
                 embed.color = discord.Color.green()
@@ -58,6 +63,10 @@ async def slot_machine_run(msg, bet, uid, username):
             else:
                 embed.color = discord.Color.red()
                 embed.add_field(name="😢 Loss", value=f"You lost {bet} coins.")
+            log_metadata.update({
+                "multiplier": SYMBOL_COEFFICIENTS.get(reels[0], 1) if result else 0,
+                "bonus": bonus
+            })
 
     # Fetch updated balance to show in footer
     bal, total_bet = await get_balance(uid, username)
@@ -72,7 +81,7 @@ async def slot_machine_run(msg, bet, uid, username):
         delta=net_change,
         balance_after=bal,
         total_bet_after=total_bet,
-        metadata={"result": result, "symbols": reels, "multiplier": SYMBOL_COEFFICIENTS.get(reels[0], 1) if result else 0, "bonus": bonus}
+        metadata=log_metadata
     )
 
     await msg.edit(embed=embed)

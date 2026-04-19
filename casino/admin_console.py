@@ -4,8 +4,12 @@ from my_logginng import db_log
 # import json
 # import datetime
 
-from database import get_users_info, get_balance, update_balance
+from database import get_users_info, get_balance, update_balance, update_total_bet
     # get_all_banned_users, ban_user_management, get_user_ban_status
+
+def _is_admin(interaction: discord.Interaction) -> bool:
+    permissions = getattr(interaction.user, "guild_permissions", None)
+    return bool(permissions and permissions.administrator)
 
 # --- (keep your original UserDatabaseSelect if you like) ---
 class UserDatabaseSelect(discord.ui.Select):
@@ -128,7 +132,7 @@ class BalanceAmountModal(discord.ui.Modal, title="Enter Amount"):
         if self.adjust_type == "balance":
             await update_balance(self.user_id, amount, 0)
         else:
-            await update_balance(self.user_id, 0, amount)
+            await update_total_bet(self.user_id, amount)
         # Log the admin action
         bal, bet = await get_balance(user_id=self.user_id, admin=True)
         await db_log(
@@ -183,6 +187,9 @@ class AdminView(discord.ui.View):
 
     @discord.ui.button(label="Show Users", style=discord.ButtonStyle.primary, custom_id='show_users', row=1)
     async def show_user_dropdown(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not _is_admin(interaction):
+            await interaction.response.send_message("❌ Admin access required.", ephemeral=True)
+            return
         if not self.users:
             self.users = await get_users_info()
         view = discord.ui.View()
@@ -191,6 +198,9 @@ class AdminView(discord.ui.View):
 
     @discord.ui.button(label="Manage Balance", style=discord.ButtonStyle.primary, custom_id='manage_balance', row=1)
     async def manage_balance(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not _is_admin(interaction):
+            await interaction.response.send_message("❌ Admin access required.", ephemeral=True)
+            return
         if not self.users:
             self.users = await get_users_info()
         view = discord.ui.View()

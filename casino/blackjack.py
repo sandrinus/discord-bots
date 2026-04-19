@@ -200,6 +200,7 @@ async def start_blackjack(interaction: discord.Interaction, bet: int):
     username = interaction.user.name
     balance, _ = await get_balance(uid, username)
     if balance < bet:
+        active_blackjack_tables.discard(uid)
         await interaction.response.send_message(f"❌ You need at least {bet} coins!", ephemeral=True)
         return
     view = BlackjackView(uid, bet)

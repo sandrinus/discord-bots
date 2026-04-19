@@ -3,18 +3,20 @@ import asyncio
 import time
 import os
 
-DB_DSN = (
-    f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWD')}"
-    f"@postgres-casino:5432/casino"
-)
-
 # Connection pool - create once, reuse connections
 pool = None
+
+def _build_db_dsn() -> str:
+    user = os.getenv("POSTGRES_USER")
+    password = os.getenv("POSTGRES_PASSWD")
+    if not user or not password:
+        raise RuntimeError("POSTGRES_USER and POSTGRES_PASSWD must be set.")
+    return f"postgresql://{user}:{password}@postgres-casino:5432/casino"
 
 async def init_pool():
     global pool
     if pool is None:
-        pool = await asyncpg.create_pool(dsn=DB_DSN)
+        pool = await asyncpg.create_pool(dsn=_build_db_dsn())
 
 def get_pool():
     if pool is None:
@@ -146,6 +148,17 @@ async def update_balance(user_id: int, win_amount: int, bet_amount: int):
             win_amount, abs(bet_amount), user_id
         )
 
+async def update_total_bet(user_id: int, delta: int):
+    async with pool.acquire() as conn:
+        await conn.execute(
+            """
+            UPDATE user_accounts
+            SET total_bet = GREATEST(total_bet + $1, 0)
+            WHERE user_id = $2
+            """,
+            delta, user_id
+        )
+
 # Update balance and total bet
 async def update_balance_atomic(user_id: int, net_change: int, bet_amount: int) -> bool:
     async with pool.acquire() as conn:
@@ -176,4 +189,3 @@ def can_act(uid, cooldown):
         return False
     user_last_action[uid] = now
     return True
-
