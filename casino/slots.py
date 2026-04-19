@@ -27,6 +27,7 @@ async def slot_machine_run(msg, bet, uid, username):
 
     result = (reels[0] == reels[1] == reels[2])
     net_change = 0
+    multiplier = 0
     log_metadata = {"result": result, "symbols": reels}
     bal, _ = await get_balance(uid, username)
     if bet and bal < bet:
@@ -35,14 +36,14 @@ async def slot_machine_run(msg, bet, uid, username):
         log_metadata["error"] = "insufficient_funds"
     else:
         if result:
-            m = SYMBOL_COEFFICIENTS[reels[0]]
+            multiplier = SYMBOL_COEFFICIENTS[reels[0]]
             if bet == 1000:
                 bonus = 4
             elif bet == 500:
                 bonus = 2
             elif bet == 100:
                 bonus = 1.5
-            win = int(bet * m * bonus)
+            win = int(bet * multiplier * bonus)
             net_change = win - bet  # net gain
         else:
             win = 0
@@ -64,7 +65,7 @@ async def slot_machine_run(msg, bet, uid, username):
                 embed.color = discord.Color.red()
                 embed.add_field(name="😢 Loss", value=f"You lost {bet} coins.")
             log_metadata.update({
-                "multiplier": SYMBOL_COEFFICIENTS.get(reels[0], 1) if result else 0,
+                "multiplier": multiplier,
                 "bonus": bonus
             })
 

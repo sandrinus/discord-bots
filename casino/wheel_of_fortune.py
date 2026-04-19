@@ -68,6 +68,7 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
                 return
             
             wheel_state = await get_wheel_state(uid)
+            starting_balance = bal
 
         await interaction.edit_original_response(embed=embed_wheel(wheel_state), view=view)
 
@@ -88,7 +89,6 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
         async with lock:
             await update_wheel_state(uid, final_index)
             result = wheel_of_fortune[final_index]
-            current_balance, _ = await get_balance(uid, interaction.user.name)
 
             win_amount_delta = 0
             bet_amount_delta = 0
@@ -96,10 +96,10 @@ async def spin_wheel_logic(interaction: discord.Interaction, bet=1000, view=None
             if result == '@':
                 msg_text = f"You hit {result}. Spin again!"
             else:
-                win_amount_delta = round_up_to_50(current_balance * result // 100)
+                win_amount_delta = round_up_to_50(starting_balance * result // 100)
                 if win_amount_delta <= 0:
                     bet_amount_delta = abs(win_amount_delta)
-                    msg_text = f"You lost {result}% of your current balance🥲: {win_amount_delta}."
+                    msg_text = f"You lost {result}% of your current balance🥲: {bet_amount_delta}."
                 else:
                     msg_text = f"You won {result}% of your current balance🤑: {win_amount_delta}."
 

@@ -1,25 +1,17 @@
 import discord
 from discord.ext import commands
-import os
 from my_logginng import db_log
 # import json
 # import datetime
 
 from database import get_users_info, get_balance, update_balance, update_total_bet
+from auth_utils import parse_admin_ids, is_admin_user
     # get_all_banned_users, ban_user_management, get_user_ban_status
 
-def _parse_admin_ids() -> set[int]:
-    raw = os.getenv("CASINO_ADMIN_IDS", "")
-    values = [x.strip() for x in raw.split(",") if x.strip()]
-    return {int(x) for x in values if x.isdigit()}
-
-ADMIN_IDS = _parse_admin_ids()
-
 def _is_admin(interaction: discord.Interaction) -> bool:
-    if interaction.user.id in ADMIN_IDS:
-        return True
-    permissions = getattr(interaction.user, "guild_permissions", None)
-    return bool(permissions and permissions.administrator)
+    return is_admin_user(interaction, ADMIN_IDS)
+
+ADMIN_IDS = parse_admin_ids()
 
 # --- (keep your original UserDatabaseSelect if you like) ---
 class UserDatabaseSelect(discord.ui.Select):

@@ -9,6 +9,7 @@ from admin_console import AdminView
 from slots import SlotView
 from blackjack import BlackjackBetView
 from wheel_of_fortune import FortuneView, embed_wheel, get_wheel_state
+from auth_utils import parse_admin_ids, is_admin_user
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix=None, intents=intents)
@@ -158,19 +159,7 @@ persistent_admin_view = None
 
 WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_ALERT")
 PING_UID = os.getenv("MY_DISCORD_UID")
-
-def _parse_admin_ids() -> set[int]:
-    raw = os.getenv("CASINO_ADMIN_IDS", "")
-    values = [x.strip() for x in raw.split(",") if x.strip()]
-    return {int(x) for x in values if x.isdigit()}
-
-ADMIN_IDS = _parse_admin_ids()
-
-def is_admin_user(interaction: discord.Interaction) -> bool:
-    if interaction.user.id in ADMIN_IDS:
-        return True
-    permissions = getattr(interaction.user, "guild_permissions", None)
-    return bool(permissions and permissions.administrator)
+ADMIN_IDS = parse_admin_ids()
 
 def notify_crash(message: str):
     if not WEBHOOK_URL:
@@ -228,7 +217,7 @@ async def casino(interaction: discord.Interaction):
 # Slash command to show the casino home screen message publicly
 @bot.tree.command(name="admin", description="Open the Admin Console")
 async def admin(interaction: discord.Interaction):
-    if not is_admin_user(interaction):
+    if not is_admin_user(interaction, ADMIN_IDS):
         await interaction.response.send_message("❌ You are not allowed to access the admin console.", ephemeral=True)
         return
     await interaction.response.send_message(
